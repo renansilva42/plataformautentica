@@ -1,90 +1,179 @@
+
 {% extends "base.html" %}
 
-{% block title %}Skill A - Habilidade de Ler Instagram{% endblock %}
+{% block title %}Análise de Perfil do Instagram{% endblock %}
+
+{% block custom_css %}
+<style>
+    .image-preview {
+        min-height: 150px;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        padding: 0.5rem;
+        background-color: #f8f9fa;
+        margin-top: 1rem;
+    }
+
+    .analysis-report {
+        white-space: pre-line;
+    }
+
+    .upload-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .upload-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    .upload-section {
+        margin-bottom: 2rem;
+    }
+
+    .instructions-card {
+        background-color: #f8f9fa;
+        margin-bottom: 2rem;
+        border-left: 4px solid #007bff;
+    }
+
+    .submit-button {
+        margin: 2rem auto;
+    }
+
+    .analysis-results-card {
+        margin-top: 3rem;
+    }
+
+    .analysis-header {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
     <div class="row">
         <div class="col-12">
-            <h1 class="mb-4">Análise de Perfil do Instagram</h1>
-            <p class="lead mb-4">
-                Faça upload dos prints do seu perfil do Instagram para receber uma análise arquetípica detalhada.
-            </p>
+            <header class="text-center mb-5">
+                <h1 class="mb-3">Análise de Perfil do Instagram</h1>
+                <p class="lead">
+                    Faça upload dos prints do seu perfil do Instagram para receber uma análise arquetípica detalhada.
+                </p>
+            </header>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                        <div class="alert alert-{{ category if category != 'message' else 'info' }}">
+                        <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show">
                             {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
                         </div>
                     {% endfor %}
                 {% endif %}
             {% endwith %}
 
-            <div class="card mb-4">
+            <div class="card instructions-card mb-4">
                 <div class="card-body">
-                    <h5 class="card-title mb-3">Instruções</h5>
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-info-circle me-2"></i>Instruções
+                    </h5>
                     <p>Faça upload de 3 capturas de tela do seu perfil do Instagram:</p>
                     <ol>
                         <li>Print da sua Bio do Instagram</li>
                         <li>Print do seu perfil do Instagram</li>
                         <li>Print do feed de suas fotos e vídeos</li>
                     </ol>
-                    <p class="text-muted">Todos os arquivos devem estar no formato .jpg, .jpeg ou .png e ter menos de 5MB cada. <strong>Tamanho máximo total: 15MB.</strong></p>
+                    <div class="alert alert-info">
+                        <i class="fas fa-file-image me-2"></i>
+                        <span class="fw-bold">Requisitos de arquivo:</span> Formatos .jpg, .jpeg ou .png
+                        <br>
+                        <i class="fas fa-weight me-2"></i>
+                        <span class="fw-bold">Tamanho:</span> Máximo de 5MB por arquivo (limite total: 15MB)
+                    </div>
                 </div>
             </div>
 
-            <form method="POST" enctype="multipart/form-data" id="instagram-analysis-form">
-                <div class="row mb-4">
-                    <div class="col-md-4">
-                        <div class="card h-100">
+            <form method="POST" enctype="multipart/form-data" id="instagram-analysis-form" class="upload-section">
+                <div class="row">
+                    <!-- Bio do Instagram -->
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 upload-card">
+                            <div class="card-header bg-light">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-user me-2"></i>1. Bio do Instagram
+                                </h5>
+                            </div>
                             <div class="card-body">
-                                <h5 class="card-title">1. Bio do Instagram</h5>
                                 <div class="mb-3">
-                                    <input type="file" class="form-control" id="bio_image" name="bio_image" accept="image/jpeg,image/png" required>
-                                    <div class="form-text">Tamanho máximo: 5MB</div>
+                                    <input type="file" class="form-control" id="bio_image" name="bio_image" 
+                                        accept="image/jpeg,image/png" required>
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle"></i> Tamanho máximo: 5MB
+                                    </div>
                                 </div>
-                                <div class="image-preview mt-3" id="bio_image_preview"></div>
+                                <div class="image-preview" id="bio_image_preview"></div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card h-100">
+
+                    <!-- Perfil do Instagram -->
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 upload-card">
+                            <div class="card-header bg-light">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-id-card me-2"></i>2. Perfil do Instagram
+                                </h5>
+                            </div>
                             <div class="card-body">
-                                <h5 class="card-title">2. Perfil do Instagram</h5>
                                 <div class="mb-3">
-                                    <input type="file" class="form-control" id="profile_image" name="profile_image" accept="image/jpeg,image/png" required>
-                                    <div class="form-text">Tamanho máximo: 5MB</div>
+                                    <input type="file" class="form-control" id="profile_image" name="profile_image" 
+                                        accept="image/jpeg,image/png" required>
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle"></i> Tamanho máximo: 5MB
+                                    </div>
                                 </div>
-                                <div class="image-preview mt-3" id="profile_image_preview"></div>
+                                <div class="image-preview" id="profile_image_preview"></div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card h-100">
+
+                    <!-- Feed do Instagram -->
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100 upload-card">
+                            <div class="card-header bg-light">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-images me-2"></i>3. Feed do Instagram
+                                </h5>
+                            </div>
                             <div class="card-body">
-                                <h5 class="card-title">3. Feed do Instagram</h5>
                                 <div class="mb-3">
-                                    <input type="file" class="form-control" id="feed_image" name="feed_image" accept="image/jpeg,image/png" required>
-                                    <div class="form-text">Tamanho máximo: 5MB</div>
+                                    <input type="file" class="form-control" id="feed_image" name="feed_image" 
+                                        accept="image/jpeg,image/png" required>
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle"></i> Tamanho máximo: 5MB
+                                    </div>
                                 </div>
-                                <div class="image-preview mt-3" id="feed_image_preview"></div>
+                                <div class="image-preview" id="feed_image_preview"></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="d-grid gap-2 col-md-6 mx-auto mb-5">
+                <div class="d-grid gap-2 col-md-6 mx-auto submit-button">
                     <button type="submit" class="btn btn-primary btn-lg" id="analyze-button">
-                        <i class="fas fa-search"></i> Analisar Perfil
+                        <i class="fas fa-search me-2"></i> Analisar Perfil
                     </button>
                 </div>
             </form>
 
-            <div id="analysis-results" class="mt-5 d-none">
+            <!-- Resultados da Análise -->
+            <div id="analysis-results" class="analysis-results-card d-none">
                 <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h3 class="mb-0">Resultado da Análise</h3>
+                    <div class="card-header analysis-header text-white">
+                        <h3 class="mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>Resultado da Análise
+                        </h3>
                     </div>
                     <div class="card-body">
                         <div class="loading text-center d-none">
@@ -100,155 +189,223 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block custom_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Função para mostrar preview da imagem
-    function previewImage(input, previewId) {
-        const preview = document.getElementById(previewId);
-        preview.innerHTML = '';
-
-        if (input.files && input.files[0]) {
+    // Definição das constantes
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    const MAX_TOTAL_SIZE = 15 * 1024 * 1024; // 15MB
+    const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+    
+    // Elementos do DOM
+    const form = document.getElementById('instagram-analysis-form');
+    const bioImageInput = document.getElementById('bio_image');
+    const profileImageInput = document.getElementById('profile_image');
+    const feedImageInput = document.getElementById('feed_image');
+    const resultsArea = document.getElementById('analysis-results');
+    const loadingIndicator = resultsArea.querySelector('.loading');
+    const analysisContent = document.getElementById('analysis-content');
+    
+    // Configurar visualização prévia para cada imagem
+    setupImagePreview(bioImageInput, 'bio_image_preview');
+    setupImagePreview(profileImageInput, 'profile_image_preview');
+    setupImagePreview(feedImageInput, 'feed_image_preview');
+    
+    // Manipular envio do formulário
+    form.addEventListener('submit', handleFormSubmit);
+    
+    /**
+     * Configura a visualização prévia de uma imagem
+     * @param {HTMLElement} input - Elemento de entrada do arquivo
+     * @param {string} previewId - ID do elemento de visualização
+     */
+    function setupImagePreview(input, previewId) {
+        input.addEventListener('change', function() {
+            const preview = document.getElementById(previewId);
+            preview.innerHTML = '';
+            
+            if (!input.files || !input.files[0]) {
+                return;
+            }
+            
             const file = input.files[0];
             
-            // Verificar tamanho do arquivo (5MB limite)
-            if (file.size > 5 * 1024 * 1024) {
-                alert('O arquivo é muito grande! Por favor, selecione uma imagem menor que 5MB.');
+            // Verificar tipo de arquivo
+            if (!ALLOWED_TYPES.includes(file.type)) {
+                showError(`O arquivo "${file.name}" não é uma imagem válida. Por favor, selecione uma imagem nos formatos JPG ou PNG.`);
+                input.value = '';
+                return;
+            }
+            
+            // Verificar tamanho do arquivo
+            if (file.size > MAX_FILE_SIZE) {
+                showError(`O arquivo "${file.name}" é muito grande! Por favor, selecione uma imagem menor que 5MB.`);
                 input.value = '';
                 return;
             }
             
             const reader = new FileReader();
-            
             reader.onload = function(e) {
                 const img = document.createElement('img');
                 img.src = e.target.result;
-                img.className = 'img-fluid';
+                img.className = 'img-fluid rounded';
+                img.alt = 'Pré-visualização da imagem';
                 preview.appendChild(img);
-            }
+            };
             
             reader.readAsDataURL(file);
-        }
+        });
     }
-
-    // Configurar preview para cada upload de imagem
-    document.getElementById('bio_image').addEventListener('change', function() {
-        previewImage(this, 'bio_image_preview');
-    });
     
-    document.getElementById('profile_image').addEventListener('change', function() {
-        previewImage(this, 'profile_image_preview');
-    });
-    
-    document.getElementById('feed_image').addEventListener('change', function() {
-        previewImage(this, 'feed_image_preview');
-    });
-
-    // Manipular envio do formulário
-    const form = document.getElementById('instagram-analysis-form');
-    form.addEventListener('submit', function(e) {
+    /**
+     * Manipula o envio do formulário
+     * @param {Event} e - Evento de envio do formulário
+     */
+    function handleFormSubmit(e) {
         e.preventDefault();
         
-        // Verificar tamanhos dos arquivos antes de enviar
-        const bioImage = document.getElementById('bio_image').files[0];
-        const profileImage = document.getElementById('profile_image').files[0];
-        const feedImage = document.getElementById('feed_image').files[0];
-        
-        if (!bioImage || !profileImage || !feedImage) {
-            alert('Por favor, selecione todas as três imagens.');
+        // Verificar se todos os arquivos foram selecionados
+        if (!validateFilesSelected()) {
             return;
         }
         
-        // Verificar tamanho dos arquivos individualmente
-        if (bioImage.size > 5 * 1024 * 1024 || 
-            profileImage.size > 5 * 1024 * 1024 || 
-            feedImage.size > 5 * 1024 * 1024) {
-            alert('Um ou mais arquivos excedem o limite de 5MB. Por favor, comprima as imagens ou selecione arquivos menores.');
-            return;
-        }
+        // Obter os arquivos selecionados
+        const bioImage = bioImageInput.files[0];
+        const profileImage = profileImageInput.files[0];
+        const feedImage = feedImageInput.files[0];
         
-        // Verificar tamanho total
+        // Verificar tamanho total dos arquivos
         const totalSize = bioImage.size + profileImage.size + feedImage.size;
-        if (totalSize > 15 * 1024 * 1024) {
-            alert('O tamanho total das imagens excede 15MB. Por favor, comprima as imagens ou selecione arquivos menores.');
+        if (totalSize > MAX_TOTAL_SIZE) {
+            showError('O tamanho total das imagens excede 15MB. Por favor, comprima as imagens ou selecione arquivos menores.');
             return;
         }
         
-        // Mostrar a área de resultados com o loader
-        const resultsArea = document.getElementById('analysis-results');
-        resultsArea.classList.remove('d-none');
-        
-        const loadingIndicator = resultsArea.querySelector('.loading');
-        loadingIndicator.classList.remove('d-none');
-        
-        const analysisContent = document.getElementById('analysis-content');
-        analysisContent.innerHTML = '';
-        
-        // Preparar os dados para envio
-        const formData = new FormData(form);
+        // Mostrar área de resultados com indicador de carregamento
+        showResults(true);
         
         // Enviar requisição AJAX
+        sendAnalysisRequest(new FormData(form));
+    }
+    
+    /**
+     * Verifica se todos os arquivos necessários foram selecionados
+     * @returns {boolean} - Verdadeiro se todos os arquivos foram selecionados
+     */
+    function validateFilesSelected() {
+        if (!bioImageInput.files[0] || !profileImageInput.files[0] || !feedImageInput.files[0]) {
+            showError('Por favor, selecione todas as três imagens necessárias para a análise.');
+            return false;
+        }
+        return true;
+    }
+    
+    /**
+     * Exibe ou oculta a área de resultados e o indicador de carregamento
+     * @param {boolean} isLoading - Se deve mostrar o indicador de carregamento
+     */
+    function showResults(isLoading = false) {
+        resultsArea.classList.remove('d-none');
+        
+        if (isLoading) {
+            loadingIndicator.classList.remove('d-none');
+            analysisContent.innerHTML = '';
+        } else {
+            loadingIndicator.classList.add('d-none');
+        }
+    }
+    
+    /**
+     * Envia a requisição AJAX para analisar as imagens
+     * @param {FormData} formData - Dados do formulário
+     */
+    function sendAnalysisRequest(formData) {
         fetch('{{ url_for("main.analyze_instagram") }}', {
             method: 'POST',
             body: formData,
             credentials: 'same-origin'
         })
-        .then(response => {
-            if (!response.ok) {
-                if (response.status === 413) {
-                    throw new Error('Arquivos muito grandes! O tamanho total das imagens excede o limite permitido.');
-                }
-                throw new Error('Erro na requisição: ' + response.status);
+        .then(handleResponse)
+        .then(displayResults)
+        .catch(handleError);
+    }
+    
+    /**
+     * Manipula a resposta da requisição
+     * @param {Response} response - Resposta da requisição
+     * @returns {Promise} - Promessa com os dados JSON da resposta
+     */
+    function handleResponse(response) {
+        if (!response.ok) {
+            if (response.status === 413) {
+                throw new Error('Arquivos muito grandes! O tamanho total das imagens excede o limite permitido.');
             }
-            return response.json();
-        })
-        .then(data => {
-            // Esconder o loading
-            loadingIndicator.classList.add('d-none');
-            
-            // Mostrar os resultados
-            if (data.success) {
-                analysisContent.innerHTML = `
-                    <div class="analysis-report">
-                        ${data.analysis}
-                    </div>
-                `;
-            } else {
-                analysisContent.innerHTML = `
-                    <div class="alert alert-danger">
-                        <h4 class="alert-heading">Erro!</h4>
-                        <p>${data.error}</p>
-                    </div>
-                `;
-            }
-        })
-        .catch(error => {
-            // Esconder o loading
-            loadingIndicator.classList.add('d-none');
-            
-            // Mostrar mensagem de erro
+            throw new Error(`Erro no servidor: ${response.status} ${response.statusText}`);
+        }
+        return response.json();
+    }
+    
+    /**
+     * Exibe os resultados da análise
+     * @param {Object} data - Dados da resposta
+     */
+    function displayResults(data) {
+        showResults(false);
+        
+        if (data.success) {
             analysisContent.innerHTML = `
-                <div class="alert alert-danger">
-                    <h4 class="alert-heading">Erro!</h4>
-                    <p>Ocorreu um erro ao processar sua solicitação: ${error.message}</p>
+                <div class="analysis-report">
+                    ${data.analysis}
                 </div>
             `;
-        });
-    });
+            
+            // Rolar para os resultados
+            resultsArea.scrollIntoView({ behavior: 'smooth' });
+        } else {
+            showError(data.error || 'Ocorreu um erro ao processar a análise.', 'analysis-content');
+        }
+    }
+    
+    /**
+     * Manipula erros da requisição
+     * @param {Error} error - Objeto de erro
+     */
+    function handleError(error) {
+        showResults(false);
+        showError(error.message || 'Ocorreu um erro ao processar sua solicitação.', 'analysis-content');
+    }
+    
+    /**
+     * Exibe uma mensagem de erro
+     * @param {string} message - Mensagem de erro
+     * @param {string} targetId - ID do elemento onde exibir o erro (opcional)
+     */
+    function showError(message, targetId = null) {
+        const errorHTML = `
+            <div class="alert alert-danger alert-dismissible fade show">
+                <h4 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Erro!</h4>
+                <p>${message}</p>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+            </div>
+        `;
+        
+        if (targetId) {
+            document.getElementById(targetId).innerHTML = errorHTML;
+        } else {
+            // Criar alerta temporário no topo do formulário
+            const alertDiv = document.createElement('div');
+            alertDiv.innerHTML = errorHTML;
+            form.prepend(alertDiv);
+            
+            // Remover alerta após 5 segundos
+            setTimeout(() => {
+                alertDiv.querySelector('.alert').classList.remove('show');
+                setTimeout(() => alertDiv.remove(), 300);
+            }, 5000);
+        }
+    }
 });
 </script>
-
-<style>
-.image-preview {
-    min-height: 150px;
-    border: 1px solid #dee2e6;
-    border-radius: 0.25rem;
-    padding: 0.5rem;
-    background-color: #f8f9fa;
-}
-
-.analysis-report {
-    white-space: pre-line;
-}
-</style>
 {% endblock %}
