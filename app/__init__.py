@@ -12,6 +12,10 @@ def create_app():
     # Load config
     app.config.from_object(get_config())
     
+    # Garantir que MAX_CONTENT_LENGTH esteja configurado
+    if 'MAX_CONTENT_LENGTH' not in app.config:
+        app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Fallback para 16MB
+    
     # Enable CORS with appropriate settings
     CORS(app, resources={r"/*": {"origins": "*"}})  # You can restrict origins as needed
     

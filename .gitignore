@@ -1,2 +1,52 @@
+# Arquivos de ambiente e configuração
+.env
+*.env
+.flaskenv
 .qodo
+
+# Arquivos Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Arquivos de upload e mídia
+uploads/*
+!uploads/README.md
+media/*
+!media/README.md
+
+# Arquivos de log
+logs/
+*.log
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Ambiente virtual
 venv/
+ENV/
+.venv/
+.env/
+
+# Arquivos específicos do IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store

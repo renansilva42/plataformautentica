@@ -179,7 +179,7 @@
                 </div>
             </a>
             
-            <a href="#" class="feature-button unlocked" id="skill-a">
+            <a href="{{ url_for('main.skill_a') }}" class="feature-button unlocked" id="skill-a">
                 <img src="{{ url_for('static', filename='img/icons/skill-a.jpeg') }}" alt="Skill A">
                 <div class="button-content">
                     <span class="button-name">Skill A habilidade de Ler instagram da Capivara</span>
@@ -258,20 +258,7 @@
             </div>
         </div>
         
-        <div class="dashboard">
-            <!-- Dashboard content -->
-            <div class="card">
-                <div class="card-header">
-                    <h3>Seus Dados</h3>
-                </div>
-                <div class="card-body">
-                    <p><strong>Nome:</strong> {{ user.nome }}</p>
-                    <p><strong>Email:</strong> {{ user.email }}</p>
-                    <p><strong>Telefone:</strong> {{ user.telefone }}</p>
-                    <p><strong>Instagram:</strong> {{ user.instagram }}</p>
-                </div>
-            </div>
-        </div>
+        <!-- Dashboard section removed -->
     </main>
     
     <footer class="app-footer">
@@ -289,10 +276,7 @@
             alert('Capivara Editorial - Funcionalidade em desenvolvimento.');
         });
         
-        document.getElementById('skill-a').addEventListener('click', function(e) {
-            e.preventDefault();
-            alert('Skill A - Funcionalidade em desenvolvimento.');
-        });
+        // Removido event listener para skill-a, pois agora usamos o link href
         
         // Add a click event for locked buttons to show a message
         document.querySelectorAll('.feature-button.locked').forEach(function(button) {

@@ -1,6 +1,10 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session, current_app
 from .auth import login_user, register_user, token_required
 from .supabase_client import SupabaseManager
+from .openai_client import OpenAIManager
+import os
+from werkzeug.utils import secure_filename
+from werkzeug.exceptions import RequestEntityTooLarge
 
 # Create blueprint
 main = Blueprint('main', __name__)
@@ -195,9 +199,9 @@ def capivara_editorial():
 
 @main.route('/skill-a')
 def skill_a():
-    """Render the Skill A feature page"""
+    """Render the Skill A (Instagram Analysis) feature page"""
     if 'token' not in session or 'user_id' not in session:
-        flash("Please log in to access this page")
+        flash("Please log in to access this page", "warning")
         return redirect(url_for('main.login'))
     
     # Get user profile
@@ -205,10 +209,75 @@ def skill_a():
     success, user_profile = SupabaseManager.get_user_profile(user_id)
     
     if not success:
-        flash("Error loading user profile")
+        flash("Error loading user profile", "danger")
         return redirect(url_for('main.login'))
     
     return render_template('features/skill_a.html', user=user_profile)
+
+@main.route('/skill-a/analyze', methods=['POST'])
+def analyze_instagram():
+    """Handle Instagram analysis"""
+    if 'token' not in session or 'user_id' not in session:
+        return jsonify({'success': False, 'error': 'Você precisa estar logado para usar esta funcionalidade'}), 401
+    
+    try:
+        # Verificar se todos os arquivos foram enviados
+        if 'bio_image' not in request.files or 'profile_image' not in request.files or 'feed_image' not in request.files:
+            return jsonify({'success': False, 'error': 'Por favor, envie todas as três imagens requeridas'}), 400
+        
+        bio_image = request.files['bio_image']
+        profile_image = request.files['profile_image']
+        feed_image = request.files['feed_image']
+        
+        # Verificar se algum arquivo está vazio
+        if bio_image.filename == '' or profile_image.filename == '' or feed_image.filename == '':
+            return jsonify({'success': False, 'error': 'Por favor, selecione todas as três imagens requeridas'}), 400
+        
+        # Verificar extensões permitidas
+        allowed_extensions = {'png', 'jpg', 'jpeg'}
+        
+        def allowed_file(filename):
+            return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
+        
+        if not all(allowed_file(f.filename) for f in [bio_image, profile_image, feed_image]):
+            return jsonify({'success': False, 'error': 'Apenas arquivos .png, .jpg e .jpeg são permitidos'}), 400
+        
+        # Verificar o tamanho dos arquivos
+        max_file_size = 5 * 1024 * 1024  # 5MB por arquivo
+        
+        for img, img_name in [(bio_image, "Bio"), (profile_image, "Perfil"), (feed_image, "Feed")]:
+            img.seek(0, 2)  # Move para o final do arquivo
+            size = img.tell()  # Obtém a posição atual (tamanho)
+            img.seek(0)  # Volta para o início
+            
+            if size > max_file_size:
+                return jsonify({
+                    'success': False, 
+                    'error': f'A imagem {img_name} excede o limite de 5MB. Por favor, comprima a imagem ou selecione um arquivo menor.'
+                }), 400
+        
+        # Chamar a API do OpenAI para análise
+        success, result = OpenAIManager.analyze_instagram_images(bio_image, profile_image, feed_image)
+        
+        if success:
+            # Retornar análise para o frontend
+            return jsonify({
+                'success': True,
+                'analysis': result
+            })
+        else:
+            return jsonify({'success': False, 'error': result}), 500
+    
+    except RequestEntityTooLarge:
+        return jsonify({
+            'success': False, 
+            'error': 'O tamanho total das imagens excede o limite permitido (16MB). Por favor, comprima as imagens ou selecione arquivos menores.'
+        }), 413
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        current_app.logger.error(f"Erro ao analisar Instagram: {error_details}")
+        return jsonify({'success': False, 'error': f"Ocorreu um erro inesperado: {str(e)}"}), 500
 
 @main.route('/skill-b')
 def skill_b():
