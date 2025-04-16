@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}Autêntica | Início{% endblock %}
+
+{% block content %}
+<div class="landing-container">
+    <div class="logo-container">
+        <div class="logo">
+            <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Logo Autêntica">
+        </div>
+        <h1 class="brand-name">AUTÊNTICA</h1>
+        <div class="brand-by">BY ÓRIZEN</div>
+    </div>
+    
+    <div class="auth-buttons">
+        <a href="{{ url_for('main.login') }}" class="btn btn-primary">Login</a>
+        <a href="{{ url_for('main.register') }}" class="btn btn-secondary">Criar Conta</a>
+    </div>
+</div>
+{% endblock %}

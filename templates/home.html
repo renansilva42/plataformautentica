@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Autêntica | Home{% endblock %}
+
+{% block content %}
+<div class="home-container">
+    <header class="app-header">
+        <div class="logo-container">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Logo Autêntica">
+            </div>
+            <h1 class="brand-name">AUTÊNTICA</h1>
+        </div>
+        
+        <div class="user-menu">
+            <div class="user-info">
+                <span class="user-name">{{ user.nome }}</span>
+                <div class="user-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </div>
+            <div class="dropdown-menu">
+                <a href="{{ url_for('main.logout') }}" class="menu-item">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </a>
+            </div>
+        </div>
+    </header>
+    
+    <main class="main-content">
+        <div class="welcome-message">
+            <h2>Bem-vindo, {{ user.nome }}!</h2>
+            <p>Esta é a página inicial do sistema Autêntica. Aqui você encontrará todas as funcionalidades disponíveis.</p>
+        </div>
+        
+        <div class="dashboard">
+            <!-- Dashboard content will go here -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Seus Dados</h3>
+                </div>
+                <div class="card-body">
+                    <p><strong>Nome:</strong> {{ user.nome }}</p>
+                    <p><strong>Email:</strong> {{ user.email }}</p>
+                    <p><strong>Telefone:</strong> {{ user.telefone }}</p>
+                    <p><strong>Instagram:</strong> {{ user.instagram }}</p>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <footer class="app-footer">
+        <p>&copy; 2025 Autêntica by Órizen. Todos os direitos reservados.</p>
+    </footer>
+</div>
+{% endblock %}
