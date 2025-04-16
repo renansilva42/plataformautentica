@@ -2,6 +2,142 @@
 
 {% block title %}Autêntica | Home{% endblock %}
 
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+<style>
+    /* Grid layout for feature buttons */
+    .buttons-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+    
+    /* Base button style */
+    .feature-button {
+        border-radius: 12px;
+        background-color: #ffffff;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        height: 200px;
+        position: relative;
+        cursor: pointer;
+        text-decoration: none;
+        color: #fff;
+    }
+    
+    /* Full-width image style */
+    .feature-button img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    
+    /* Text overlay */
+    .button-content {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        padding: 1rem;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+    
+    .button-name {
+        font-weight: 500;
+        font-size: 1rem;
+        line-height: 1.2;
+        color: #fff;
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    }
+    
+    /* Unlocked button hover effects */
+    .feature-button.unlocked:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .feature-button.unlocked:hover img {
+        transform: scale(1.05);
+    }
+    
+    /* Locked button styles */
+    .feature-button.locked {
+        opacity: 0.8;
+        filter: grayscale(70%);
+        cursor: not-allowed;
+    }
+    
+    /* Lock overlay */
+    .lock-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+    }
+    
+    .lock-icon {
+        font-size: 3rem;
+        color: #fff;
+        background-color: rgba(0, 0, 0, 0.5);
+        border-radius: 50%;
+        padding: 0.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .buttons-grid {
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 1rem;
+        }
+        
+        .feature-button {
+            height: 180px;
+        }
+        
+        .button-name {
+            font-size: 0.9rem;
+        }
+        
+        .lock-icon {
+            font-size: 2.5rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .buttons-grid {
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        }
+        
+        .feature-button {
+            height: 160px;
+        }
+        
+        .button-name {
+            font-size: 0.85rem;
+        }
+        
+        .lock-icon {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="home-container">
     <header class="app-header">
@@ -30,11 +166,100 @@
     <main class="main-content">
         <div class="welcome-message">
             <h2>Bem-vindo, {{ user.nome }}!</h2>
-            <p>Esta é a página inicial do sistema Autêntica. Aqui você encontrará todas as funcionalidades disponíveis.</p>
+            <p>Selecione uma das opções disponíveis abaixo:</p>
+        </div>
+        
+        <!-- Buttons Grid Layout -->
+        <div class="buttons-grid">
+            <!-- Unlocked Buttons -->
+            <a href="#" class="feature-button unlocked" id="capivara-editorial">
+                <img src="{{ url_for('static', filename='img/icons/capivara-editorial.jpeg') }}" alt="Capivara Editorial">
+                <div class="button-content">
+                    <span class="button-name">Capivara Editorial</span>
+                </div>
+            </a>
+            
+            <a href="#" class="feature-button unlocked" id="skill-a">
+                <img src="{{ url_for('static', filename='img/icons/skill-a.jpeg') }}" alt="Skill A">
+                <div class="button-content">
+                    <span class="button-name">Skill A habilidade de Ler instagram da Capivara</span>
+                </div>
+            </a>
+            
+            <!-- Locked Buttons -->
+            <div class="feature-button locked">
+                <img src="{{ url_for('static', filename='img/icons/capivara-tracao.jpeg') }}" alt="Capivara Tração">
+                <div class="lock-overlay">
+                    <i class="fas fa-lock lock-icon"></i>
+                </div>
+                <div class="button-content">
+                    <span class="button-name">Capivara Tração</span>
+                </div>
+            </div>
+            
+            <div class="feature-button locked">
+                <img src="{{ url_for('static', filename='img/icons/capivara-brechas.jpeg') }}" alt="Capivara das Brechas">
+                <div class="lock-overlay">
+                    <i class="fas fa-lock lock-icon"></i>
+                </div>
+                <div class="button-content">
+                    <span class="button-name">Capivara das Brechas</span>
+                </div>
+            </div>
+            
+            <div class="feature-button locked">
+                <img src="{{ url_for('static', filename='img/icons/capivara-conteudo.jpeg') }}" alt="Capivara do Conteúdo">
+                <div class="lock-overlay">
+                    <i class="fas fa-lock lock-icon"></i>
+                </div>
+                <div class="button-content">
+                    <span class="button-name">Capivara do Conteúdo</span>
+                </div>
+            </div>
+            
+            <div class="feature-button locked">
+                <img src="{{ url_for('static', filename='img/icons/capivara-corretora.jpeg') }}" alt="Capivara Corretora Ortográfica">
+                <div class="lock-overlay">
+                    <i class="fas fa-lock lock-icon"></i>
+                </div>
+                <div class="button-content">
+                    <span class="button-name">Capivara Corretora Ortográfica</span>
+                </div>
+            </div>
+            
+            <div class="feature-button locked">
+                <img src="{{ url_for('static', filename='img/icons/cfo.jpeg') }}" alt="CFO">
+                <div class="lock-overlay">
+                    <i class="fas fa-lock lock-icon"></i>
+                </div>
+                <div class="button-content">
+                    <span class="button-name">CFO</span>
+                </div>
+            </div>
+            
+            <div class="feature-button locked">
+                <img src="{{ url_for('static', filename='img/icons/willian-ai.jpeg') }}" alt="Willian AI">
+                <div class="lock-overlay">
+                    <i class="fas fa-lock lock-icon"></i>
+                </div>
+                <div class="button-content">
+                    <span class="button-name">Willian AI</span>
+                </div>
+            </div>
+            
+            <div class="feature-button locked">
+                <img src="{{ url_for('static', filename='img/icons/ipm.jpeg') }}" alt="IPM">
+                <div class="lock-overlay">
+                    <i class="fas fa-lock lock-icon"></i>
+                </div>
+                <div class="button-content">
+                    <span class="button-name">IPM</span>
+                </div>
+            </div>
         </div>
         
         <div class="dashboard">
-            <!-- Dashboard content will go here -->
+            <!-- Dashboard content -->
             <div class="card">
                 <div class="card-header">
                     <h3>Seus Dados</h3>
@@ -53,4 +278,28 @@
         <p>&copy; 2025 Autêntica by Órizen. Todos os direitos reservados.</p>
     </footer>
 </div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add a click event for unlocked buttons to show a development message
+        document.getElementById('capivara-editorial').addEventListener('click', function(e) {
+            e.preventDefault();
+            alert('Capivara Editorial - Funcionalidade em desenvolvimento.');
+        });
+        
+        document.getElementById('skill-a').addEventListener('click', function(e) {
+            e.preventDefault();
+            alert('Skill A - Funcionalidade em desenvolvimento.');
+        });
+        
+        // Add a click event for locked buttons to show a message
+        document.querySelectorAll('.feature-button.locked').forEach(function(button) {
+            button.addEventListener('click', function() {
+                alert('Esta funcionalidade ainda não está disponível para o seu perfil.');
+            });
+        });
+    });
+</script>
 {% endblock %}

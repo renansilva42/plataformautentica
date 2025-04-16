@@ -1,0 +1,152 @@
+/* Grid layout for feature buttons */
+.buttons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+/* Additional overrides to ensure full-width images */
+.feature-button img {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    object-fit: cover !important;
+    border-radius: 0 !important;
+}
+
+/* Base button style */
+.feature-button {
+    border-radius: 12px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    height: 200px;
+    position: relative;
+    cursor: pointer;
+    text-decoration: none;
+    color: #fff;
+}
+
+/* Full-width image style */
+.feature-button img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+/* Text overlay */
+.button-content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.button-name {
+    font-weight: 500;
+    font-size: 1rem;
+    line-height: 1.2;
+    color: #fff;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+    max-height: 2.4em; /* Limit text height to about 2 lines */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+/* Unlocked button hover effects */
+.feature-button.unlocked:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.feature-button.unlocked:hover img {
+    transform: scale(1.05);
+}
+
+/* Locked button styles */
+.feature-button.locked {
+    opacity: 0.8;
+    filter: grayscale(70%);
+    cursor: not-allowed;
+}
+
+/* Lock overlay */
+.lock-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.lock-overlay i {
+    font-size: 3rem;
+    color: #fff;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    padding: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Hover effect for locked buttons */
+.feature-button.locked:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .buttons-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 1rem;
+    }
+    
+    .feature-button {
+        height: 180px;
+    }
+    
+    .button-name {
+        font-size: 0.9rem;
+    }
+    
+    .lock-overlay i {
+        font-size: 2.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .buttons-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    }
+    
+    .feature-button {
+        height: 160px;
+    }
+    
+    .button-name {
+        font-size: 0.85rem;
+    }
+    
+    .lock-overlay i {
+        font-size: 2rem;
+    }
+}
