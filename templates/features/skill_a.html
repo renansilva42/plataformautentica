@@ -266,6 +266,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleFormSubmit(e) {
         e.preventDefault();
         
+        // Esconder resultados anteriores
+        hideResults();
+        
         // Verificar se todos os arquivos foram selecionados
         if (!validateFilesSelected()) {
             return;
@@ -287,7 +290,8 @@ document.addEventListener('DOMContentLoaded', function() {
         showResults(true);
         
         // Enviar requisição AJAX
-        sendAnalysisRequest(new FormData(form));
+        const formData = new FormData(form);
+        sendAnalysisRequest(formData);
     }
     
     /**
@@ -318,6 +322,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     /**
+     * Oculta a área de resultados
+     */
+    function hideResults() {
+        resultsArea.classList.add('d-none');
+        loadingIndicator.classList.add('d-none');
+        analysisContent.innerHTML = '';
+    }
+    
+    /**
      * Envia a requisição AJAX para analisar as imagens
      * @param {FormData} formData - Dados do formulário
      */
@@ -325,26 +338,30 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch('{{ url_for("main.analyze_instagram") }}', {
             method: 'POST',
             body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
             credentials: 'same-origin'
         })
-        .then(handleResponse)
-        .then(displayResults)
-        .catch(handleError);
-    }
-    
-    /**
-     * Manipula a resposta da requisição
-     * @param {Response} response - Resposta da requisição
-     * @returns {Promise} - Promessa com os dados JSON da resposta
-     */
-    function handleResponse(response) {
-        if (!response.ok) {
-            if (response.status === 413) {
-                throw new Error('Arquivos muito grandes! O tamanho total das imagens excede o limite permitido.');
+        .then(response => {
+            if (!response.ok) {
+                if (response.status === 413) {
+                    throw new Error('Arquivos muito grandes! O tamanho total das imagens excede o limite permitido.');
+                }
+                if (response.status === 404) {
+                    throw new Error('Endpoint não encontrado. Verifique se a rota está configurada corretamente.');
+                }
+                return response.text().then(text => {
+                    throw new Error(`Erro no servidor: ${response.status} ${response.statusText}. Detalhes: ${text || 'Sem detalhes disponíveis'}`);
+                });
             }
-            throw new Error(`Erro no servidor: ${response.status} ${response.statusText}`);
-        }
-        return response.json();
+            return response.json();
+        })
+        .then(displayResults)
+        .catch(error => {
+            console.error('Erro na requisição:', error);
+            handleError(error);
+        });
     }
     
     /**
@@ -374,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     function handleError(error) {
         showResults(false);
-        showError(error.message || 'Ocorreu um erro ao processar sua solicitação.', 'analysis-content');
+        showError(error.message || 'Ocorreu um erro ao processar sua solicitação. Verifique sua conexão com a internet e tente novamente.', 'analysis-content');
     }
     
     /**

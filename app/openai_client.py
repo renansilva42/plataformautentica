@@ -22,8 +22,8 @@ class OpenAIManager:
             tuple: (success, result)
         """
         try:
-            # URL do endpoint
-            url = "https://api.openai.com/v1/responses"
+            # URL do endpoint - CORRIGIDO: endpoint correto para API de chat com imagens
+            url = "https://api.openai.com/v1/chat/completions"
             
             # Obtém a chave da API do ambiente
             api_key = current_app.config.get('OPENAI_API_KEY')
@@ -43,180 +43,117 @@ class OpenAIManager:
                 base64_encoded = base64.b64encode(image_data.getvalue()).decode('utf-8')
                 return f"data:image/jpeg;base64,{base64_encoded}"
             
-            bio_image_url = image_to_base64_url(bio_image)
-            profile_image_url = image_to_base64_url(profile_image)
-            feed_image_url = image_to_base64_url(feed_image)
+            try:
+                bio_image_url = image_to_base64_url(bio_image)
+                profile_image_url = image_to_base64_url(profile_image)
+                feed_image_url = image_to_base64_url(feed_image)
+            except Exception as e:
+                current_app.logger.error(f"Erro ao processar imagens: {str(e)}")
+                return False, f"Erro ao processar as imagens: {str(e)}"
             
-            # Corpo da requisição (JSON)
+            # Corpo da requisição (JSON) - CORRIGIDO: formato correto para chat completions
             payload = {
-                "model": "gpt-4.1",
-                "instructions": """
-                🧩 Prompt para Microprocessos e Micrometodologias Arquetípicas
-
-                Contexto: Você é um analista arquetípico altamente capacitado, treinado nos conceitos profundos dos livros de Carl Jung, e possui acesso a imagens e textos dos perfis analisados. Sua tarefa é realizar uma análise de microprocessos para complementar o diagnóstico arquetípico, utilizando microfiltros e um esquema de pontuação refinado.
-
-                Objetivo: Validar rapidamente a presença e intensidade dos arquétipos manifestados e a coerência entre os elementos visuais e textuais, além de identificar o potencial alinhamento com o público-alvo.
-
-                1. MICROFILTROS ARQUETÍPICOS
-
-                Para cada perfil analisado, responda e registre, de forma objetiva, os seguintes pontos:
-
-                a) Luz ou Sombra do Arquétipo
-
-                Verifique e indique se o perfil manifesta predominância da luz (aspectos positivos, virtuosos, conscientes) ou da sombra (aspectos inconscientes, reprimidos ou distorcidos) do arquétipo.
-
-                b) Linguagem Textual – Emocional ou Racional
-
-                Analise a comunicação textual (bio, legendas, posts) e determine se ela é orientada mais para o emocional (expressão dos sentimentos, sensibilidade, intimidade) ou para o racional (lógica, objetividade, clareza argumentativa).
-
-                c) Estética Visual – Ativa ou Receptiva
-
-                Examine os elementos visuais (imagens, cores, composições) e identifique se a estética se manifesta de forma ativa (dinâmica, vibrante, enérgica) ou receptiva (suave, contemplativa, serena).
-
-                Instruções: Avalie cada item de forma independente, utilizando insights das obras de Jung, e registre suas observações com uma justificativa concisa apoiada em termos simbólicos e estéticos.
-
-                2. ESQUEMA DE PONTUAÇÃO
-
-                Abaixo, elabore um sistema de pontuação que permita quantificar a análise em três dimensões, atribuindo uma nota de 0 a 5 para cada critério:
-
-                a) Força Arquetípica
-
-                Definição: Grau em que o arquétipo é claro e facilmente identificável no perfil.
-
-                Escala:
-
-                0: Ausência de definição
-
-                1-2: Sinais tênues ou ambíguos
-
-                3: Moderada presença
-
-                4-5: Forte e inequívoca manifestação
-
-                b) Coerência (Imagem x Texto x Energia)
-
-                Definição: Grau de alinhamento entre os elementos visuais, a comunicação textual e a energia simbólica percebida.
-
-                Escala:
-
-                0: Inconsistência total entre os elementos
-
-                1-2: Pequenas sinergias, mas com muitos contrastes
-
-                3: Coerência moderada
-
-                4-5: Alinhamento harmonioso e robusto de todos os elementos
-
-                c) Alinhamento com o Público-Alvo
-
-                Definição: Quão bem o perfil se comunica com o público-alvo desejado, considerando a ressonância dos valores e arquétipos apresentados.
-
-                Escala:
-
-                0: Desalinhamento evidente
-
-                1-2: Alinhamento parcial e incerto
-
-                3: Alinhamento razoável
-
-                4-5: Excelente correspondência entre a comunicação do perfil e as expectativas do público
-
-                Instruções: Para cada critério, justifique a pontuação com observações específicas baseadas nos dados visuais e textuais do perfil. Caso haja dúvidas ou ambiguidade em algum dos critérios, indique os pontos de atenção e possíveis áreas de ajuste.
-
-                Exemplo de Instrução Final
-
-                Ao final da análise, produza um relatório resumido que contenha:
-
-                O resultado dos microfiltros (luz/sombra, emocional/racional, ativa/receptiva)
-
-                A pontuação final para Força Arquetípica, Coerência e Alinhamento
-
-                Uma síntese poética e estratégica que integre os dados e a pontuação, oferecendo um diagnóstico esclarecedor do posicionamento arquetípico do perfil.
-
-                Mantenha a linguagem técnica e artística, fornecendo um feedback que permita ao usuário ajustar e potencializar sua comunicação com clareza e autenticidade.
-
-                Aqui está uma lógica de análises:
-
-                Comece com <Os Arquétipos e o Inconsciente Coletivo>.
-
-                Em seguida, suba o <O Homem e Seus Símbolos>.
-
-                Depois, adicione <Aion> e <Tipos Psicológicos>.
-                """,
-                "tools": [{
-                    "type": "file_search",
-                    "vector_store_ids": ["vs_67fe9e93b4208191a9171f2843142ac0"],
-                    "max_num_results": 20
-                }],
-                "input": [
+                "model": "gpt-4.1",  # Modelo com suporte a visão
+                "max_tokens": 4000,
+                "messages": [
                     {
                         "role": "system",
                         "content": """
-                        aqui estão os livros a sua disposição no vector de conhecimento:
-
-                        1. <<Os Arquétipos e o Inconsciente Coletivo (The Archetypes and the Collective Unconscious)>>
-
-                        Obra mais direta e central sobre arquétipos.
-
-                        Define os principais arquétipos e discute o funcionamento do inconsciente coletivo.
-
-                        Fala sobre o Self, a Sombra, a Persona, a Anima/Animus, entre outros.
-
-                        Este é o livro número 9 da coleção "Obras Completas de Jung" (CW9/I).
-
-                        2. <Aion: Estudos sobre o Simbolismo do Si-mesmo> (Aion: Researches into the Phenomenology of the Self)
-
-                        Explora profundamente o arquétipo do Self e seu papel na individuação.
-
-                        Analisa o símbolo de Cristo como representação do Self.
-
-                        Muito útil para compreender dinâmicas de sombra, persona, anima/animus em níveis mais profundos.
-
-                        Este é o volume 9/II das Obras Completas (CW9/II).
-
-                        3. <Tipos Psicológicos> (Psychological Types)
-
-                        Introduz os conceitos de introversão/extroversão e das funções cognitivas (sensação, intuição, pensamento, sentimento).
-
-                        Essencial para treinar a IA a compreender o estilo de comunicação e expressão dos perfis (relacional vs lógico, objetivo vs subjetivo).
-
-                        Volume 6 das Obras Completas (CW6).
-
-                        4. <O Homem e Seus Símbolos> (Man and His Symbols)
-
-                        Último livro de Jung, escrito para o público leigo.
-
-                        Riquíssimo em simbologia imagética — excelente para treinar a IA na leitura simbólica de imagens, fotos e ícones.
-
-                        Inclui ensaios de discípulos de Jung também.
+                        Você é um analista arquetípico altamente capacitado, treinado nos conceitos profundos dos livros de Carl Jung. Sua tarefa é realizar uma análise de microprocessos para complementar o diagnóstico arquetípico, utilizando microfiltros e um esquema de pontuação refinado.
+                        
+                        Utilize os conhecimentos dos seguintes livros:
+                        1. Os Arquétipos e o Inconsciente Coletivo
+                        2. O Homem e Seus Símbolos
+                        3. Aion: Estudos sobre o Simbolismo do Si-mesmo
+                        4. Tipos Psicológicos
                         """
                     },
                     {
                         "role": "user",
                         "content": [
-                            {"type": "input_text", "text": "aqui estão as imagens para a analise"},
-                            {"type": "input_image", "image_url": bio_image_url},
-                            {"type": "input_image", "image_url": profile_image_url},
-                            {"type": "input_image", "image_url": feed_image_url}
+                            {
+                                "type": "text",
+                                "text": """
+                                🧩 Analise estas imagens do perfil do Instagram com base na metodologia arquetípica:
+                                
+                                1. MICROFILTROS ARQUETÍPICOS
+                                a) Luz ou Sombra do Arquétipo
+                                b) Linguagem Textual – Emocional ou Racional
+                                c) Estética Visual – Ativa ou Receptiva
+                                
+                                2. ESQUEMA DE PONTUAÇÃO (0-5)
+                                a) Força Arquetípica
+                                b) Coerência (Imagem x Texto x Energia)
+                                c) Alinhamento com o Público-Alvo
+                                
+                                Produza um relatório completo com análise e recomendações.
+                                """
+                            },
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": bio_image_url,
+                                    "detail": "high"
+                                }
+                            },
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": profile_image_url,
+                                    "detail": "high"
+                                }
+                            },
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": feed_image_url,
+                                    "detail": "high"
+                                }
+                            }
                         ]
                     }
                 ]
             }
             
+            # Log para debug
+            current_app.logger.info(f"Enviando requisição para OpenAI API: {url}")
+            
             # Enviar a requisição POST
-            response = requests.post(url, headers=headers, json=payload)
+            response = requests.post(url, headers=headers, json=payload, timeout=60)
             
             # Verificar o status da resposta
             if response.status_code == 200:
-                result = response.json()
-                # Extrair o conteúdo da análise da resposta
-                analysis_text = result.get('response', {}).get('content', '')
-                if not analysis_text:
-                    return False, "Resposta vazia da API"
-                return True, analysis_text
+                try:
+                    result = response.json()
+                    # Extrair o conteúdo da análise da resposta
+                    analysis_text = result.get('choices', [{}])[0].get('message', {}).get('content', '')
+                    if not analysis_text:
+                        current_app.logger.error(f"Resposta vazia da API: {json.dumps(result)}")
+                        return False, "Resposta vazia da API"
+                    
+                    return True, analysis_text
+                except (KeyError, IndexError, json.JSONDecodeError) as e:
+                    current_app.logger.error(f"Erro ao processar resposta da API: {str(e)}")
+                    return False, f"Erro ao processar resposta da API: {str(e)}"
             else:
-                return False, f"Erro na requisição: {response.status_code} - {response.text}"
+                error_msg = f"Erro na requisição: {response.status_code}"
+                try:
+                    error_details = response.json()
+                    current_app.logger.error(f"{error_msg} - {json.dumps(error_details)}")
+                    if 'error' in error_details:
+                        error_msg += f" - {error_details['error']['message']}"
+                except:
+                    current_app.logger.error(f"{error_msg} - {response.text}")
+                    error_msg += f" - {response.text}"
                 
+                return False, error_msg
+                
+        except requests.exceptions.Timeout:
+            current_app.logger.error("Timeout ao conectar com a API do OpenAI")
+            return False, "Tempo limite excedido ao conectar com o serviço de análise. Tente novamente."
+        except requests.exceptions.ConnectionError:
+            current_app.logger.error("Erro de conexão com a API do OpenAI")
+            return False, "Erro de conexão com o serviço de análise. Verifique sua conexão com a internet."
         except Exception as e:
             import traceback
             error_details = traceback.format_exc()
