@@ -174,3 +174,72 @@ def confirm_email():
 def register_success():
     """Show registration success page"""
     return render_template('register_success.html')
+
+# Feature routes - placeholders for button functionality
+@main.route('/capivara-editorial')
+def capivara_editorial():
+    """Render the Capivara Editorial feature page"""
+    if 'token' not in session or 'user_id' not in session:
+        flash("Please log in to access this page")
+        return redirect(url_for('main.login'))
+    
+    # Get user profile
+    user_id = session['user_id']
+    success, user_profile = SupabaseManager.get_user_profile(user_id)
+    
+    if not success:
+        flash("Error loading user profile")
+        return redirect(url_for('main.login'))
+    
+    return render_template('features/capivara_editorial.html', user=user_profile)
+
+@main.route('/skill-a')
+def skill_a():
+    """Render the Skill A feature page"""
+    if 'token' not in session or 'user_id' not in session:
+        flash("Please log in to access this page")
+        return redirect(url_for('main.login'))
+    
+    # Get user profile
+    user_id = session['user_id']
+    success, user_profile = SupabaseManager.get_user_profile(user_id)
+    
+    if not success:
+        flash("Error loading user profile")
+        return redirect(url_for('main.login'))
+    
+    return render_template('features/skill_a.html', user=user_profile)
+
+@main.route('/skill-b')
+def skill_b():
+    """Render the Skill B feature page"""
+    if 'token' not in session or 'user_id' not in session:
+        flash("Please log in to access this page")
+        return redirect(url_for('main.login'))
+    
+    # Get user profile
+    user_id = session['user_id']
+    success, user_profile = SupabaseManager.get_user_profile(user_id)
+    
+    if not success:
+        flash("Error loading user profile")
+        return redirect(url_for('main.login'))
+    
+    return render_template('features/skill_b.html', user=user_profile)
+
+@main.route('/skill-c')
+def skill_c():
+    """Render the Skill C feature page"""
+    if 'token' not in session or 'user_id' not in session:
+        flash("Please log in to access this page")
+        return redirect(url_for('main.login'))
+    
+    # Get user profile
+    user_id = session['user_id']
+    success, user_profile = SupabaseManager.get_user_profile(user_id)
+    
+    if not success:
+        flash("Error loading user profile")
+        return redirect(url_for('main.login'))
+    
+    return render_template('features/skill_c.html', user=user_profile)
