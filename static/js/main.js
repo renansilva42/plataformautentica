@@ -114,3 +114,46 @@ async function apiRequest(url, method = 'GET', data = null) {
         throw error;
     }
 }
+
+// Loading indicator functions
+const loadingIndicator = document.getElementById('loading-indicator');
+
+/**
+ * Exibe ou oculta a área de resultados e o indicador de carregamento
+ * @param {boolean} isLoading - Se deve mostrar o indicador de carregamento
+ */
+function showResults(isLoading = false) {
+    resultsArea.classList.remove('d-none');
+    
+    if (isLoading) {
+        // Mostra o loading e limpa qualquer conteúdo de análise
+        showLoading();
+        analysisContent.innerHTML = '';
+    } else {
+        // Oculta o loading
+        hideLoading();
+    }
+}
+
+/**
+ * Exibe os resultados da análise
+ * @param {Object} data - Dados da resposta
+ */
+function displayResults(data) {
+    showResults(false);
+    
+    if (data.success) {
+        // Usar marked para converter markdown em HTML
+        const html = marked.parse(data.analysis);
+        analysisContent.innerHTML = `
+            <div class="analysis-report">
+                ${html}
+            </div>
+        `;
+        
+        // Rolar para os resultados
+        resultsArea.scrollIntoView({ behavior: 'smooth' });
+    } else {
+        showError(data.error || 'Ocorreu um erro ao processar a análise.', 'analysis-content');
+    }
+}
