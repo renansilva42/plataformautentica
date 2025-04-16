@@ -14,6 +14,16 @@
         margin-top: 1rem;
     }
 
+    /* Limitar tamanho máximo das imagens de preview para não exceder a tela */
+    .image-preview img {
+        max-width: 100%;
+        max-height: 300px;
+        object-fit: contain;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
     .analysis-report {
         white-space: pre-line;
     }
@@ -52,137 +62,162 @@
 {% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-12">
-            <header class="text-center mb-5">
-                <h1 class="mb-3">Análise de Perfil do Instagram</h1>
-                <p class="lead">
-                    Faça upload dos prints do seu perfil do Instagram para receber uma análise arquetípica detalhada.
-                </p>
-            </header>
-
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-
-            <div class="card instructions-card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">
-                        <i class="fas fa-info-circle me-2"></i>Instruções
-                    </h5>
-                    <p>Faça upload de 3 capturas de tela do seu perfil do Instagram:</p>
-                    <ol>
-                        <li>Print da sua Bio do Instagram</li>
-                        <li>Print do seu perfil do Instagram</li>
-                        <li>Print do feed de suas fotos e vídeos</li>
-                    </ol>
-                    <div class="alert alert-info">
-                        <i class="fas fa-file-image me-2"></i>
-                        <span class="fw-bold">Requisitos de arquivo:</span> Formatos .jpg, .jpeg ou .png
-                        <br>
-                        <i class="fas fa-weight me-2"></i>
-                        <span class="fw-bold">Tamanho:</span> Máximo de 5MB por arquivo (limite total: 15MB)
-                    </div>
+<div class="home-container">
+    <header class="app-header">
+        <div class="logo-container">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Logo Autêntica">
+            </div>
+            <h1 class="brand-name">AUTÊNTICA</h1>
+        </div>
+        
+        <div class="user-menu">
+            <div class="user-info">
+                <span class="user-name">{{ user.nome }}</span>
+                <div class="user-avatar">
+                    <i class="fas fa-user-circle"></i>
                 </div>
             </div>
+            <div class="dropdown-menu">
+                <a href="{{ url_for('main.logout') }}" class="menu-item">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </a>
+            </div>
+        </div>
+    </header>
 
-            <form method="POST" enctype="multipart/form-data" id="instagram-analysis-form" class="upload-section">
-                <div class="row">
-                    <!-- Bio do Instagram -->
-                    <div class="col-md-4 mb-4">
-                        <div class="card h-100 upload-card">
-                            <div class="card-header bg-light">
-                                <h5 class="card-title mb-0">
-                                    <i class="fas fa-user me-2"></i>1. Bio do Instagram
-                                </h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <input type="file" class="form-control" id="bio_image" name="bio_image" 
-                                        accept="image/jpeg,image/png" required>
-                                    <div class="form-text">
-                                        <i class="fas fa-info-circle"></i> Tamanho máximo: 5MB
-                                    </div>
-                                </div>
-                                <div class="image-preview" id="bio_image_preview"></div>
-                            </div>
-                        </div>
-                    </div>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-12">
+                <header class="text-center mb-5">
+                    <h1 class="mb-3">Análise de Perfil do Instagram</h1>
+                    <p class="lead">
+                        Faça upload dos prints do seu perfil do Instagram para receber uma análise arquetípica detalhada.
+                    </p>
+                </header>
 
-                    <!-- Perfil do Instagram -->
-                    <div class="col-md-4 mb-4">
-                        <div class="card h-100 upload-card">
-                            <div class="card-header bg-light">
-                                <h5 class="card-title mb-0">
-                                    <i class="fas fa-id-card me-2"></i>2. Perfil do Instagram
-                                </h5>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
                             </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <input type="file" class="form-control" id="profile_image" name="profile_image" 
-                                        accept="image/jpeg,image/png" required>
-                                    <div class="form-text">
-                                        <i class="fas fa-info-circle"></i> Tamanho máximo: 5MB
-                                    </div>
-                                </div>
-                                <div class="image-preview" id="profile_image_preview"></div>
-                            </div>
-                        </div>
-                    </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
 
-                    <!-- Feed do Instagram -->
-                    <div class="col-md-4 mb-4">
-                        <div class="card h-100 upload-card">
-                            <div class="card-header bg-light">
-                                <h5 class="card-title mb-0">
-                                    <i class="fas fa-images me-2"></i>3. Feed do Instagram
-                                </h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="mb-3">
-                                    <input type="file" class="form-control" id="feed_image" name="feed_image" 
-                                        accept="image/jpeg,image/png" required>
-                                    <div class="form-text">
-                                        <i class="fas fa-info-circle"></i> Tamanho máximo: 5MB
-                                    </div>
-                                </div>
-                                <div class="image-preview" id="feed_image_preview"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="d-grid gap-2 col-md-6 mx-auto submit-button">
-                    <button type="submit" class="btn btn-primary btn-lg" id="analyze-button">
-                        <i class="fas fa-search me-2"></i> Analisar Perfil
-                    </button>
-                </div>
-            </form>
-
-            <!-- Resultados da Análise -->
-            <div id="analysis-results" class="analysis-results-card d-none">
-                <div class="card">
-                    <div class="card-header analysis-header text-white">
-                        <h3 class="mb-0">
-                            <i class="fas fa-chart-bar me-2"></i>Resultado da Análise
-                        </h3>
-                    </div>
+                <div class="card instructions-card mb-4">
                     <div class="card-body">
-                        <div class="loading text-center d-none">
+                        <h5 class="card-title mb-3">
+                            <i class="fas fa-info-circle me-2"></i>Instruções
+                        </h5>
+                        <p>Faça upload de 3 capturas de tela do seu perfil do Instagram:</p>
+                        <ol>
+                            <li>Print da sua Bio do Instagram</li>
+                            <li>Print do seu perfil do Instagram</li>
+                            <li>Print do feed de suas fotos e vídeos</li>
+                        </ol>
+                        <div class="alert alert-info">
+                            <i class="fas fa-file-image me-2"></i>
+                            <span class="fw-bold">Requisitos de arquivo:</span> Formatos .jpg, .jpeg ou .png
+                            <br>
+                            <i class="fas fa-weight me-2"></i>
+                            <span class="fw-bold">Tamanho:</span> Máximo de 5MB por arquivo (limite total: 15MB)
+                        </div>
+                    </div>
+                </div>
+
+                <form method="POST" enctype="multipart/form-data" id="instagram-analysis-form" class="upload-section">
+                    <div class="row">
+                        <!-- Bio do Instagram -->
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 upload-card">
+                                <div class="card-header bg-light">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-user me-2"></i>1. Bio do Instagram
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <input type="file" class="form-control" id="bio_image" name="bio_image" 
+                                            accept="image/jpeg,image/png" required>
+                                        <div class="form-text">
+                                            <i class="fas fa-info-circle"></i> Tamanho máximo: 5MB
+                                        </div>
+                                    </div>
+                                    <div class="image-preview" id="bio_image_preview"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Perfil do Instagram -->
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 upload-card">
+                                <div class="card-header bg-light">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-id-card me-2"></i>2. Perfil do Instagram
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <input type="file" class="form-control" id="profile_image" name="profile_image" 
+                                            accept="image/jpeg,image/png" required>
+                                        <div class="form-text">
+                                            <i class="fas fa-info-circle"></i> Tamanho máximo: 5MB
+                                        </div>
+                                    </div>
+                                    <div class="image-preview" id="profile_image_preview"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Feed do Instagram -->
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100 upload-card">
+                                <div class="card-header bg-light">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-images me-2"></i>3. Feed do Instagram
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <input type="file" class="form-control" id="feed_image" name="feed_image" 
+                                            accept="image/jpeg,image/png" required>
+                                        <div class="form-text">
+                                            <i class="fas fa-info-circle"></i> Tamanho máximo: 5MB
+                                        </div>
+                                    </div>
+                                    <div class="image-preview" id="feed_image_preview"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 col-md-6 mx-auto submit-button">
+                        <button type="submit" class="btn btn-primary btn-lg" id="analyze-button">
+                            <i class="fas fa-search me-2"></i> Analisar Perfil
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Resultados da Análise -->
+                <div id="analysis-results" class="analysis-results-card d-none">
+                    <div class="card">
+                        <div class="card-header analysis-header text-white">
+                            <h3 class="mb-0">
+                                <i class="fas fa-chart-bar me-2"></i>Resultado da Análise
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                        <div id="loading-indicator" class="text-center" style="display:none;">
                             <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Carregando...</span>
                             </div>
                             <p class="mt-3">Analisando seu perfil. Isso pode levar alguns instantes...</p>
                         </div>
-                        <div id="analysis-content"></div>
+                            <div id="analysis-content"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -192,6 +227,7 @@
 {% endblock %}
 
 {% block custom_js %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Definição das constantes
@@ -212,6 +248,10 @@ document.addEventListener('DOMContentLoaded', function() {
     setupImagePreview(bioImageInput, 'bio_image_preview');
     setupImagePreview(profileImageInput, 'profile_image_preview');
     setupImagePreview(feedImageInput, 'feed_image_preview');
+    
+    // Inicialmente esconder área de resultados e loading
+    hideResults();
+    hideLoading();
     
     // Manipular envio do formulário
     form.addEventListener('submit', handleFormSubmit);
@@ -268,6 +308,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Esconder resultados anteriores
         hideResults();
+        hideLoading();
         
         // Verificar se todos os arquivos foram selecionados
         if (!validateFilesSelected()) {
@@ -314,10 +355,12 @@ document.addEventListener('DOMContentLoaded', function() {
         resultsArea.classList.remove('d-none');
         
         if (isLoading) {
-            loadingIndicator.classList.remove('d-none');
+            // Mostra o loading e limpa qualquer conteúdo de análise
+            showLoading();
             analysisContent.innerHTML = '';
         } else {
-            loadingIndicator.classList.add('d-none');
+            // Oculta o loading
+            hideLoading();
         }
     }
     
@@ -326,7 +369,7 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     function hideResults() {
         resultsArea.classList.add('d-none');
-        loadingIndicator.classList.add('d-none');
+        hideLoading();
         analysisContent.innerHTML = '';
     }
     
@@ -372,9 +415,11 @@ document.addEventListener('DOMContentLoaded', function() {
         showResults(false);
         
         if (data.success) {
+            // Usar marked para converter markdown em HTML
+            const html = marked.parse(data.analysis);
             analysisContent.innerHTML = `
                 <div class="analysis-report">
-                    ${data.analysis}
+                    ${html}
                 </div>
             `;
             
@@ -424,5 +469,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
+    function showLoading() {
+        loadingIndicator.classList.add('visible');
+    }
+
+    function hideLoading() {
+        loadingIndicator.classList.remove('visible');
+    }
 </script>
 {% endblock %}

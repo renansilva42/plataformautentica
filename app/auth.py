@@ -18,7 +18,8 @@ def generate_token(user_id):
             algorithm='HS256'
         )
     except Exception as e:
-        return e
+        current_app.logger.error(f"Erro ao gerar token JWT: {str(e)}")
+        return None
 
 def token_required(f):
     """Decorator to protect routes that require authentication"""

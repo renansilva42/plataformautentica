@@ -9,8 +9,18 @@ def create_app():
                 static_folder='../static',
                 template_folder='../templates')
     
+    
     # Load config
     app.config.from_object(get_config())
+    app.secret_key = app.config.get('SECRET_KEY') or 'chave-secreta-temporaria-para-desenvolvimento'
+    
+    # Depuração - imprima para verificar se a SECRET_KEY está definida
+    print("SECRET_KEY está definida:", 'SECRET_KEY' in app.config)
+    print("Valor da SECRET_KEY:", app.config.get('SECRET_KEY'))
+    
+    # Adicionar SECRET_KEY se não estiver na configuração
+    if 'SECRET_KEY' not in app.config:
+        app.config['SECRET_KEY'] = 'chave-secreta-temporaria-para-desenvolvimento'  # Em produção, use um valor aleatório forte
     
     # Garantir que MAX_CONTENT_LENGTH esteja configurado
     if 'MAX_CONTENT_LENGTH' not in app.config:
