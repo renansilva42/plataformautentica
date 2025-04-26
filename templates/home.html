@@ -175,13 +175,16 @@
         
         <!-- Buttons Grid Layout -->
         <div class="buttons-grid">
-            <!-- Unlocked Buttons -->
-            <a href="#" class="feature-button unlocked" id="capivara-editorial">
+            <!-- Locked Capivara Editorial Button -->
+            <div class="feature-button locked" id="capivara-editorial">
                 <img src="{{ url_for('static', filename='img/icons/capivara-editorial.jpeg') }}" alt="Capivara Editorial">
+                <div class="lock-overlay">
+                    <i class="fas fa-lock lock-icon"></i>
+                </div>
                 <div class="button-content">
                     <span class="button-name">Capivara Editorial</span>
                 </div>
-            </a>
+            </div>
             
             <a href="{{ url_for('main.skill_a') }}" class="feature-button unlocked" id="skill-a">
                 <img src="{{ url_for('static', filename='img/icons/skill-a.jpeg') }}" alt="Skill A">
@@ -271,14 +274,8 @@
 
 {% block custom_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Add a click event for unlocked buttons to show a development message
-        document.getElementById('capivara-editorial').addEventListener('click', function(e) {
-            e.preventDefault();
-            alert('Capivara Editorial - Funcionalidade em desenvolvimento.');
-        });
-        
-        // Removido event listener para skill-a, pois agora usamos o link href
+        document.addEventListener('DOMContentLoaded', function() {
+        // Removed click event for capivara-editorial button to block it
         
         // Add a click event for locked buttons to show a message
         document.querySelectorAll('.feature-button.locked').forEach(function(button) {
