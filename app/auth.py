@@ -8,7 +8,7 @@ def generate_token(user_id):
     """Generate a JWT token for the authenticated user"""
     try:
         payload = {
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24),
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=48),
             'iat': datetime.datetime.utcnow(),
             'sub': str(user_id)
         }
@@ -98,16 +98,26 @@ def register_user(email, password, nome, telefone, instagram):
     """
     try:
         # Tenta registrar o usuário no Supabase
-        success, user_id, email_confirmed = SupabaseManager.sign_up(email, password, nome, telefone, instagram)
+        success, user_id_or_error, email_confirmed = SupabaseManager.sign_up(email, password, nome, telefone, instagram)
         
         if success:
+            # Generate token with 48-hour expiration
+            token = generate_token(user_id_or_error)
+            
+            # Get user profile to retrieve access_expiration
+            success_profile, user_profile = SupabaseManager.get_user_profile(user_id_or_error)
+            access_expiration = None
+            if success_profile:
+                access_expiration = user_profile.get('access_expiration')
+            
             # Retorna uma mensagem especial indicando que o usuário precisa confirmar o email
             return True, {
-                'user_id': user_id,
-                'token': None,  # Sem token ainda, pois o email precisa ser confirmado
-                'message': 'Um link de confirmação foi enviado para o seu email. Por favor, confirme seu email para continuar.'
+                'user_id': user_id_or_error,
+                'token': token,
+                'access_expiration': access_expiration,
+                'message': 'Um link de confirmação foi enviado para o seu email. Por favor, confirme seu email para continuar.' if not email_confirmed else ''
             }
         else:
-            return False, user_id  # Neste caso, user_id contém a mensagem de erro
+            return False, user_id_or_error  # Neste caso, user_id_or_error contém a mensagem de erro
     except Exception as e:
         return False, str(e)

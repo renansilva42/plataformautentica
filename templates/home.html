@@ -169,6 +169,10 @@
             <p>Selecione uma das opções disponíveis abaixo:</p>
         </div>
         
+        <div>
+            <p>Seu acesso expira em: <span id="countdown-timer">Carregando...</span></p>
+        </div>
+        
         <!-- Buttons Grid Layout -->
         <div class="buttons-grid">
             <!-- Unlocked Buttons -->
@@ -257,8 +261,6 @@
                 </div>
             </div>
         </div>
-        
-        <!-- Dashboard section removed -->
     </main>
     
     <footer class="app-footer">
@@ -284,6 +286,32 @@
                 alert('Esta funcionalidade ainda não está disponível para o seu perfil.');
             });
         });
+        
+        // Countdown timer script
+        const expirationTime = "{{ access_expiration }}";
+        const countdownElement = document.getElementById('countdown-timer');
+
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const expirationDate = new Date(expirationTime).getTime();
+            const distance = expirationDate - now;
+
+            if (distance < 0) {
+                countdownElement.innerHTML = "Seu acesso expirou.";
+                clearInterval(interval);
+                return;
+            }
+
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            countdownElement.innerHTML = hours + "h "
+                + minutes + "m " + seconds + "s ";
+        }
+
+        updateCountdown();
+        const interval = setInterval(updateCountdown, 1000);
     });
 </script>
 {% endblock %}

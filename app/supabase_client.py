@@ -1,6 +1,8 @@
 import os
 from supabase import create_client
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 # Load environment variables
 load_dotenv()
@@ -14,33 +16,49 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 class SupabaseManager:
     @staticmethod
+    @staticmethod
     def sign_up(email, password, nome, telefone, instagram):
         """Register a new user in Supabase Auth and store additional data in profiles table"""
         try:
+            # Check if user with this email already exists and access_expiration is still valid
+            response = supabase.table("profiles").select("id, access_expiration").eq("email", email).execute()
+            if response.data and len(response.data) > 0:
+                profile = response.data[0]
+                access_expiration = profile.get("access_expiration")
+                if access_expiration:
+                    expiration_dt = datetime.fromisoformat(access_expiration)
+                    if expiration_dt > datetime.now(ZoneInfo("America/Belem")):
+                        return False, "Usuário já cadastrado e com acesso válido. Por favor, aguarde o término do período de acesso antes de tentar novamente.", None
+
             # Create auth user
             auth_response = supabase.auth.sign_up({
                 "email": email,
                 "password": password
             })
-            
+
             # Get the user's UUID
             user_id = auth_response.user.id
-            
+
             # Check if email is confirmed
             # (Will typically be False if Supabase is configured for email confirmation)
             email_confirmed = auth_response.user.email_confirmed_at is not None
-            
-            # Store additional profile data
+
+            # Calculate access expiration timestamp (48 hours from now) in America/Belem timezone
+            access_expiration = (datetime.now(ZoneInfo("America/Belem")) + timedelta(hours=48)).isoformat()
+
+            # Store additional profile data including access_expiration
             profile_data = {
                 "id": user_id,
+                "email": email,
                 "nome": nome,
                 "telefone": telefone,
-                "instagram": instagram
+                "instagram": instagram,
+                "access_expiration": access_expiration
             }
-            
+
             # Insert profile data into the profiles table
             supabase.table("profiles").insert(profile_data).execute()
-            
+
             # Return user_id and email confirmation status
             return True, user_id, email_confirmed
         except Exception as e:
