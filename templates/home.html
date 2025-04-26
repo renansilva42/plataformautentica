@@ -170,7 +170,7 @@
         </div>
         
         <div>
-            <p>Seu acesso expira em: <span id="countdown-timer">Carregando...</span></p>
+            <p>Seu acesso expira em: <span id="countdown-timer">2 dias</span></p>
         </div>
         
         <!-- Buttons Grid Layout -->
@@ -284,31 +284,7 @@
             });
         });
         
-        // Countdown timer script
-        const countdownElement = document.getElementById('countdown-timer');
-        const countdownDuration = 96 * 60 * 60 * 1000; // 96 hours (4 days) in milliseconds
-        let countdownStart = new Date().getTime();
-
-        function updateCountdown() {
-            const now = new Date().getTime();
-            const distance = countdownDuration - (now - countdownStart);
-
-            if (distance < 0) {
-                countdownElement.innerHTML = "Seu acesso expirou.";
-                clearInterval(interval);
-                return;
-            }
-
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-            countdownElement.innerHTML = hours + "h "
-                + minutes + "m " + seconds + "s ";
-        }
-
-        updateCountdown();
-        const interval = setInterval(updateCountdown, 1000);
+        // Countdown timer script removed as per user request
     });
 </script>
 {% endblock %}
