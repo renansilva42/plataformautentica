@@ -84,6 +84,10 @@ class OpenAIManager:
                     "text": message
                 })
             elif message_type == 'image':
+                # Validate image URL format
+                if not (isinstance(message, str) and (message.startswith("http://") or message.startswith("https://"))):
+                    current_app.logger.error(f"Invalid image URL format received: {message}")
+                    raise Exception("Invalid image URL format. Please provide a valid URL starting with http:// or https://")
                 message_content.append({
                     "type": "image_url",
                     "image_url": {
@@ -110,7 +114,6 @@ class OpenAIManager:
             create_run_url = f"{base_url}/threads/{thread_id}/runs"
             run_payload = {
                 "assistant_id": assistant_id,
-                "instructions": f"Please address the user as {str(user_profile.get('name', 'User'))}.",
             }
             current_app.logger.info(f"Criando run para thread {thread_id} com assistant {assistant_id}")
             run_response = requests.post(create_run_url, headers=headers, json=run_payload, timeout=60)
