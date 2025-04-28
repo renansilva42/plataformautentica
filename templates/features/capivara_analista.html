@@ -1,0 +1,290 @@
+{% extends 'base.html' %}
+
+{% block title %}Capivara Analista{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+<style>
+    /* Chat container */
+    .chat-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        display: flex;
+        flex-direction: column;
+        height: 80vh;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        background-color: #f9f9f9;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Messages area */
+    .messages {
+        flex: 1;
+        padding: 1rem;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        background-color: #fff;
+        border-bottom: 1px solid #ddd;
+        border-radius: 12px 12px 0 0;
+    }
+
+    /* Message bubbles */
+    .message {
+        max-width: 70%;
+        padding: 0.75rem 1rem;
+        border-radius: 20px;
+        font-size: 1rem;
+        line-height: 1.4;
+        word-wrap: break-word;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .message.user {
+        align-self: flex-end;
+        background-color: #007bff;
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+
+    .message.assistant {
+        align-self: flex-start;
+        background-color: #e5e5ea;
+        color: #000;
+        border-bottom-left-radius: 4px;
+    }
+
+    /* Image messages */
+    .message img {
+        max-width: 100%;
+        border-radius: 12px;
+    }
+
+    /* Input area */
+    .input-area {
+        display: flex;
+        padding: 0.5rem 1rem;
+        background-color: #fff;
+        border-radius: 0 0 12px 12px;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .input-area textarea {
+        flex: 1;
+        resize: none;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        border: 1px solid #ccc;
+        font-size: 1rem;
+        font-family: inherit;
+        height: 40px;
+        transition: height 0.2s;
+    }
+
+    .input-area textarea:focus {
+        outline: none;
+        border-color: #007bff;
+    }
+
+    .input-area button {
+        background-color: #007bff;
+        border: none;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background-color 0.2s;
+    }
+
+    .input-area button:hover {
+        background-color: #0056b3;
+    }
+
+    /* Hidden file input */
+    #image-input {
+        display: none;
+    }
+
+    /* Image upload button */
+    .image-upload-label {
+        background-color: #28a745;
+        padding: 0.5rem 0.75rem;
+        border-radius: 20px;
+        color: white;
+        cursor: pointer;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.2s;
+    }
+
+    .image-upload-label:hover {
+        background-color: #1e7e34;
+    }
+
+    /* Scrollbar styling */
+    .messages::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .messages::-webkit-scrollbar-thumb {
+        background-color: rgba(0,0,0,0.1);
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="home-container">
+    <header class="app-header">
+        <div class="logo-container">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Logo Autêntica">
+            </div>
+            <h1 class="brand-name">AUTÊNTICA</h1>
+        </div>
+        <div class="user-menu">
+            <div class="user-info">
+                <span class="user-name">{{ user.nome }}</span>
+                <div class="user-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </div>
+            <div class="dropdown-menu">
+                <a href="{{ url_for('main.logout') }}" class="menu-item">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="chat-container" aria-label="Chat Capivara Analista">
+            <div class="messages" id="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+            <form id="chat-form" class="input-area" aria-label="Enviar mensagem">
+                <textarea id="message-input" placeholder="Digite sua mensagem..." rows="1" aria-label="Mensagem"></textarea>
+                <label for="image-input" class="image-upload-label" title="Enviar imagem" aria-label="Enviar imagem">
+                    <i class="fas fa-image"></i>
+                </label>
+                <input type="file" id="image-input" accept="image/*" aria-hidden="true" />
+                <button type="submit" aria-label="Enviar mensagem"><i class="fas fa-paper-plane"></i></button>
+            </form>
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <p>&copy; 2025 Autêntica by Órizen. Todos os direitos reservados.</p>
+    </footer>
+</div>
+{% endblock %}
+
+{% block custom_js %}
+<script>
+    const messagesContainer = document.getElementById('messages');
+    const chatForm = document.getElementById('chat-form');
+    const messageInput = document.getElementById('message-input');
+    const imageInput = document.getElementById('image-input');
+
+    // Function to add message to chat
+    function addMessage(content, sender, isImage = false) {
+        const messageElem = document.createElement('div');
+        messageElem.classList.add('message', sender);
+        if (isImage) {
+            const img = document.createElement('img');
+            img.src = content;
+            img.alt = sender === 'user' ? 'Sua imagem' : 'Imagem da Capivara Analista';
+            messageElem.appendChild(img);
+        } else {
+            messageElem.textContent = content;
+        }
+        messagesContainer.appendChild(messageElem);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // Handle form submit
+    chatForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const text = messageInput.value.trim();
+        if (!text) return;
+
+        addMessage(text, 'user');
+        messageInput.value = '';
+        messageInput.focus();
+
+        try {
+            const response = await fetch('{{ url_for("main.capivara_analista_chat") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: text, type: 'text' })
+            });
+            const data = await response.json();
+            if (data.success) {
+                addMessage(data.response, 'assistant');
+            } else {
+                addMessage('Erro: ' + data.error, 'assistant');
+            }
+        } catch (error) {
+            addMessage('Erro na comunicação com o servidor.', 'assistant');
+        }
+    });
+
+    // Handle image upload
+    imageInput.addEventListener('change', async () => {
+        const file = imageInput.files[0];
+        if (!file) return;
+
+        // Validate file type and size (max 5MB)
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Tipo de arquivo não suportado. Use JPG, PNG ou GIF.');
+            imageInput.value = '';
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Arquivo muito grande. O tamanho máximo é 5MB.');
+            imageInput.value = '';
+            return;
+        }
+
+        // Convert image to base64
+        const reader = new FileReader();
+        reader.onload = async () => {
+            const base64Image = reader.result;
+            addMessage(base64Image, 'user', true);
+
+            try {
+                const response = await fetch('{{ url_for("main.capivara_analista_chat") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message: base64Image, type: 'image' })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    addMessage(data.response, 'assistant');
+                } else {
+                    addMessage('Erro: ' + data.error, 'assistant');
+                }
+            } catch (error) {
+                addMessage('Erro na comunicação com o servidor.', 'assistant');
+            }
+        };
+        reader.readAsDataURL(file);
+        imageInput.value = '';
+    });
+
+    // Auto-expand textarea height
+    messageInput.addEventListener('input', () => {
+        messageInput.style.height = 'auto';
+        messageInput.style.height = messageInput.scrollHeight + 'px';
+    });
+</script>
+{% endblock %}

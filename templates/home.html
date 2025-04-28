@@ -175,6 +175,30 @@
         
         <!-- Buttons Grid Layout -->
         <div class="buttons-grid">
+            <a href="{{ url_for('main.skill_a') }}" class="feature-button unlocked" id="skill-a">
+                <img src="{{ url_for('static', filename='img/icons/skill-a.jpeg') }}" alt="Skill A">
+                <div class="button-content">
+                    <span class="button-name">Análise de Perfil</span>
+                </div>
+            </a>
+
+            <a href="{{ url_for('main.capivara_analista') }}" class="feature-button unlocked" id="capivara-analista">
+                <img src="{{ url_for('static', filename='img/icons/capivara-editorial.jpeg') }}" alt="Capivara Analista">
+                <div class="button-content">
+                    <span class="button-name">Capivara Analista</span>
+                </div>
+            </a>
+
+            <div class="feature-button locked">
+                <img src="{{ url_for('static', filename='img/icons/capivara-conteudo.jpeg') }}" alt="Capivara do Conteúdo">
+                <div class="lock-overlay">
+                    <i class="fas fa-lock lock-icon"></i>
+                </div>
+                <div class="button-content">
+                    <span class="button-name">Capivara do Conteúdo</span>
+                </div>
+            </div>
+
             <!-- Locked Capivara Editorial Button -->
             <div class="feature-button locked" id="capivara-editorial">
                 <img src="{{ url_for('static', filename='img/icons/capivara-editorial.jpeg') }}" alt="Capivara Editorial">
@@ -185,14 +209,7 @@
                     <span class="button-name">Capivara Editorial</span>
                 </div>
             </div>
-            
-            <a href="{{ url_for('main.skill_a') }}" class="feature-button unlocked" id="skill-a">
-                <img src="{{ url_for('static', filename='img/icons/skill-a.jpeg') }}" alt="Skill A">
-                <div class="button-content">
-                    <span class="button-name">Skill A habilidade de Ler instagram da Capivara</span>
-                </div>
-            </a>
-            
+
             <!-- Locked Buttons -->
             <div class="feature-button locked">
                 <img src="{{ url_for('static', filename='img/icons/capivara-tracao.jpeg') }}" alt="Capivara Tração">
@@ -211,16 +228,6 @@
                 </div>
                 <div class="button-content">
                     <span class="button-name">Capivara das Brechas</span>
-                </div>
-            </div>
-            
-            <div class="feature-button locked">
-                <img src="{{ url_for('static', filename='img/icons/capivara-conteudo.jpeg') }}" alt="Capivara do Conteúdo">
-                <div class="lock-overlay">
-                    <i class="fas fa-lock lock-icon"></i>
-                </div>
-                <div class="button-content">
-                    <span class="button-name">Capivara do Conteúdo</span>
                 </div>
             </div>
             

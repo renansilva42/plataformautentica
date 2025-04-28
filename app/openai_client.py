@@ -1,161 +1,199 @@
 import os
 import requests
 import json
-import base64
-from io import BytesIO
+import time
 from flask import current_app
 
 class OpenAIManager:
     """Classe para gerenciar chamadas à API do OpenAI"""
     
     @staticmethod
-    def analyze_instagram_images(bio_image, profile_image, feed_image):
+    def verify_assistant(assistant_id, headers):
         """
-        Analisa imagens do Instagram usando a API do OpenAI
+        Verifica se o assistant existe e está acessível
         
         Args:
-            bio_image: Imagem da bio do Instagram
-            profile_image: Imagem do perfil do Instagram
-            feed_image: Imagem do feed do Instagram
+            assistant_id (str): ID do assistant a ser verificado
+            headers (dict): Headers para a requisição
             
         Returns:
-            tuple: (success, result)
+            bool: True se o assistant existe, False caso contrário
         """
         try:
-            # URL do endpoint - CORRIGIDO: endpoint correto para API de chat com imagens
-            url = "https://api.openai.com/v1/chat/completions"
+            base_url = "https://api.openai.com/v1"
+            get_assistant_url = f"{base_url}/assistants/{assistant_id}"
             
-            # Obtém a chave da API do ambiente
-            api_key = current_app.config.get('OPENAI_API_KEY')
+            response = requests.get(get_assistant_url, headers=headers, timeout=30)
+            return response.status_code == 200
+        except:
+            return False
+            
+    @staticmethod
+    def capivara_analista_chat(message, message_type, user_profile):
+        """
+        Envia uma mensagem para o assistente Capivara Analista usando a API OpenAI Assistants API
+
+        Args:
+            message (str): Mensagem do usuário (texto ou URL para imagem)
+            message_type (str): 'text' ou 'image'
+            user_profile (dict): Perfil do usuário (pode ser usado para contexto)
+
+        Returns:
+            str: Resposta do assistente
+        """
+        try:
+            api_key = current_app.config.get('OPENAI_API_KEY_ANALISTA') or os.getenv('OPENAI_API_KEY_ANALISTA')
+            assistant_id = os.getenv('OPENAI_CAPIVARA_ANALISTA_ASSISTANT_ID')
+            
             if not api_key:
-                return False, "API key não configurada"
-            
-            # Cabeçalhos da requisição
+                raise Exception("API key não configurada")
+            if not assistant_id:
+                raise Exception("OPENAI_CAPIVARA_ANALISTA_ASSISTANT_ID não configurado na variável de ambiente")
+                
+            # Registra o ID do assistant para depuração
+            current_app.logger.info(f"Usando assistant ID: {assistant_id}")
+
+            # Additional log to verify which assistant is being used
+            current_app.logger.info(f"Assistant ID type: {type(assistant_id)}; value: {assistant_id}")
+
             headers = {
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {api_key}"
+                "Authorization": f"Bearer {api_key}",
+                "OpenAI-Beta": "assistants=v2"
             }
+
+            base_url = "https://api.openai.com/v1"
+
+            # Step 1: Create a thread
+            create_thread_url = f"{base_url}/threads"
+            thread_response = requests.post(create_thread_url, headers=headers, json={}, timeout=30)
+            if thread_response.status_code not in (200, 201):
+                raise Exception(f"Erro ao criar thread: {thread_response.status_code} - {thread_response.text}")
+            thread_data = thread_response.json()
+            thread_id = thread_data.get('id')
+            if not thread_id:
+                raise Exception("ID da thread não retornado")
+
+            # Step 2: Add message to the thread
+            add_message_url = f"{base_url}/threads/{thread_id}/messages"
+            message_content = []
             
-            # Converter imagens para URLs base64
-            def image_to_base64_url(image):
-                image_data = BytesIO(image.read())
-                image.seek(0)  # Reset file pointer
-                base64_encoded = base64.b64encode(image_data.getvalue()).decode('utf-8')
-                return f"data:image/jpeg;base64,{base64_encoded}"
-            
-            try:
-                bio_image_url = image_to_base64_url(bio_image)
-                profile_image_url = image_to_base64_url(profile_image)
-                feed_image_url = image_to_base64_url(feed_image)
-            except Exception as e:
-                current_app.logger.error(f"Erro ao processar imagens: {str(e)}")
-                return False, f"Erro ao processar as imagens: {str(e)}"
-            
-            # Corpo da requisição (JSON) - CORRIGIDO: formato correto para chat completions
-            payload = {
-                "model": "gpt-4.1",  # Modelo com suporte a visão
-                "max_tokens": 4000,
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": """
-                        Você é um analista arquetípico altamente capacitado, treinado nos conceitos profundos dos livros de Carl Jung. Sua tarefa é realizar uma análise de microprocessos para complementar o diagnóstico arquetípico, utilizando microfiltros e um esquema de pontuação refinado.
-                        
-                        Utilize os conhecimentos dos seguintes livros:
-                        1. Os Arquétipos e o Inconsciente Coletivo
-                        2. O Homem e Seus Símbolos
-                        3. Aion: Estudos sobre o Simbolismo do Si-mesmo
-                        4. Tipos Psicológicos
-                        """
-                    },
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "text",
-                                "text": """
-                                🧩 Analise estas imagens do perfil do Instagram com base na metodologia arquetípica:
-                                
-                                1. MICROFILTROS ARQUETÍPICOS
-                                a) Luz ou Sombra do Arquétipo
-                                b) Linguagem Textual – Emocional ou Racional
-                                c) Estética Visual – Ativa ou Receptiva
-                                
-                                2. ESQUEMA DE PONTUAÇÃO (0-5)
-                                a) Força Arquetípica
-                                b) Coerência (Imagem x Texto x Energia)
-                                c) Alinhamento com o Público-Alvo
-                                
-                                Produza um relatório completo com análise e recomendações.
-                                """
-                            },
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": bio_image_url,
-                                    "detail": "high"
-                                }
-                            },
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": profile_image_url,
-                                    "detail": "high"
-                                }
-                            },
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": feed_image_url,
-                                    "detail": "high"
-                                }
-                            }
-                        ]
+            if message_type == 'text':
+                message_content.append({
+                    "type": "text",
+                    "text": message
+                })
+            elif message_type == 'image':
+                message_content.append({
+                    "type": "image_url",
+                    "image_url": {
+                        "url": message,
+                        "detail": "high"
                     }
-                ]
+                })
+            
+            message_payload = {
+                "role": "user",
+                "content": message_content
             }
             
-            # Log para debug
-            current_app.logger.info(f"Enviando requisição para OpenAI API: {url}")
+            message_response = requests.post(add_message_url, headers=headers, json=message_payload, timeout=30)
+            if message_response.status_code not in (200, 201):
+                raise Exception(f"Erro ao adicionar mensagem: {message_response.status_code} - {message_response.text}")
+
+            # Verifica se o assistant existe antes de criar o run
+            if not OpenAIManager.verify_assistant(assistant_id, headers):
+                current_app.logger.error(f"Assistant não encontrado: {assistant_id}")
+                raise Exception(f"Assistant com ID '{assistant_id}' não encontrado ou inacessível. Verifique se o ID está correto e se você tem permissão para acessá-lo.")
             
-            # Enviar a requisição POST
-            response = requests.post(url, headers=headers, json=payload, timeout=60)
+            # Step 3: Create a run to get assistant response
+            create_run_url = f"{base_url}/threads/{thread_id}/runs"
+            run_payload = {
+                "assistant_id": assistant_id,
+                "instructions": f"Please address the user as {str(user_profile.get('name', 'User'))}.",
+            }
+            current_app.logger.info(f"Criando run para thread {thread_id} com assistant {assistant_id}")
+            run_response = requests.post(create_run_url, headers=headers, json=run_payload, timeout=60)
+            if run_response.status_code not in (200, 201):
+                raise Exception(f"Erro ao criar run: {run_response.status_code} - {run_response.text}")
+            run_data = run_response.json()
+            run_id = run_data.get('id')
             
-            # Verificar o status da resposta
-            if response.status_code == 200:
-                try:
-                    result = response.json()
-                    # Extrair o conteúdo da análise da resposta
-                    analysis_text = result.get('choices', [{}])[0].get('message', {}).get('content', '')
-                    if not analysis_text:
-                        current_app.logger.error(f"Resposta vazia da API: {json.dumps(result)}")
-                        return False, "Resposta vazia da API"
-                    
-                    return True, analysis_text
-                except (KeyError, IndexError, json.JSONDecodeError) as e:
-                    current_app.logger.error(f"Erro ao processar resposta da API: {str(e)}")
-                    return False, f"Erro ao processar resposta da API: {str(e)}"
-            else:
-                error_msg = f"Erro na requisição: {response.status_code}"
-                try:
-                    error_details = response.json()
-                    current_app.logger.error(f"{error_msg} - {json.dumps(error_details)}")
-                    if 'error' in error_details:
-                        error_msg += f" - {error_details['error']['message']}"
-                except:
-                    current_app.logger.error(f"{error_msg} - {response.text}")
-                    error_msg += f" - {response.text}"
+            # Step 4: Wait for the run to complete
+            max_retries = 60  # Máximo de 60 tentativas (aproximadamente 5 minutos com 5s de espera)
+            retries = 0
+            while retries < max_retries:
+                check_run_url = f"{base_url}/threads/{thread_id}/runs/{run_id}"
+                run_status_response = requests.get(check_run_url, headers=headers, timeout=30)
+                if run_status_response.status_code != 200:
+                    raise Exception(f"Erro ao verificar status do run: {run_status_response.status_code} - {run_status_response.text}")
                 
-                return False, error_msg
+                run_status_data = run_status_response.json()
+                status = run_status_data.get('status')
                 
+                if status == 'completed':
+                    break
+                elif status in ['failed', 'cancelled', 'expired']:
+                    raise Exception(f"Run terminou com status: {status}")
+                
+                time.sleep(5)  # Aguarda 5 segundos antes de verificar novamente
+                retries += 1
+            
+            if retries >= max_retries:
+                raise Exception("Tempo limite excedido aguardando a resposta do assistente")
+
+            # Step 5: Retrieve messages after run completion
+            list_messages_url = f"{base_url}/threads/{thread_id}/messages"
+            messages_response = requests.get(list_messages_url, headers=headers, timeout=30)
+            if messages_response.status_code != 200:
+                raise Exception(f"Erro ao listar mensagens: {messages_response.status_code} - {messages_response.text}")
+            
+            messages_data = messages_response.json()
+            messages = messages_data.get('data', [])
+            
+            # Get the latest assistant message
+            assistant_messages = [msg for msg in messages if msg.get('role') == 'assistant']
+            if not assistant_messages:
+                raise Exception("Nenhuma resposta do assistente encontrada")
+            
+            latest_assistant_message = assistant_messages[0]  # Mensagens são retornadas em ordem cronológica inversa
+            
+            # Extract text content from the message
+            content_parts = latest_assistant_message.get('content', [])
+            assistant_response = ""
+            
+            for part in content_parts:
+                if part.get('type') == 'text':
+                    text_part = part.get('text', '')
+                    if isinstance(text_part, str):
+                        assistant_response += text_part
+                    elif isinstance(text_part, dict):
+                        # Extract 'value' field if present to avoid raw dict string
+                        assistant_response += text_part.get('value', str(text_part))
+                    else:
+                        # If other type, convert to string safely
+                        assistant_response += str(text_part)
+            
+            if not assistant_response:
+                raise Exception("Conteúdo da resposta do assistente vazio")
+
+            return assistant_response
+
         except requests.exceptions.Timeout:
             current_app.logger.error("Timeout ao conectar com a API do OpenAI")
-            return False, "Tempo limite excedido ao conectar com o serviço de análise. Tente novamente."
+            raise Exception("Tempo limite excedido ao conectar com o serviço. Tente novamente.")
         except requests.exceptions.ConnectionError:
             current_app.logger.error("Erro de conexão com a API do OpenAI")
-            return False, "Erro de conexão com o serviço de análise. Verifique sua conexão com a internet."
+            raise Exception("Erro de conexão com o serviço. Verifique sua conexão com a internet.")
         except Exception as e:
             import traceback
             error_details = traceback.format_exc()
-            current_app.logger.error(f"Erro ao analisar imagens: {error_details}")
-            return False, f"Erro ao analisar as imagens: {str(e)}"
+            current_app.logger.error(f"Erro na comunicação com a API: {error_details}")
+            
+            # Fornece mensagens de erro mais específicas e úteis
+            if "No assistant found with id" in str(e):
+                raise Exception(f"Assistant não encontrado. O ID '{assistant_id}' não existe ou sua API key não tem acesso a ele. Verifique as configurações e permissões.")
+            elif "You didn't provide an API key" in str(e) or "Invalid API key" in str(e):
+                raise Exception("Chave de API inválida ou não fornecida. Verifique sua configuração OPENAI_API_KEY.")
+            else:
+                raise e

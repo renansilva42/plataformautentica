@@ -315,3 +315,45 @@ def skill_c():
         return redirect(url_for('main.login'))
     
     return render_template('features/skill_c.html', user=user_profile)
+
+@main.route('/capivara-analista')
+def capivara_analista():
+    """Render the Capivara Analista chat page"""
+    if 'token' not in session or 'user_id' not in session:
+        flash("Please log in to access this page")
+        return redirect(url_for('main.login'))
+    
+    user_id = session['user_id']
+    success, user_profile = SupabaseManager.get_user_profile(user_id)
+    
+    if not success:
+        flash("Error loading user profile")
+        return redirect(url_for('main.login'))
+    
+    return render_template('features/capivara_analista.html', user=user_profile)
+
+@main.route('/capivara-analista/chat', methods=['POST'])
+def capivara_analista_chat():
+    """Handle chat messages for Capivara Analista"""
+    if 'token' not in session or 'user_id' not in session:
+        return jsonify({'success': False, 'error': 'Authentication required'}), 401
+    
+    user_id = session['user_id']
+    success, user_profile = SupabaseManager.get_user_profile(user_id)
+    if not success:
+        return jsonify({'success': False, 'error': 'User profile not found'}), 404
+    
+    data = request.get_json()
+    if not data or 'message' not in data:
+        return jsonify({'success': False, 'error': 'No message provided'}), 400
+    
+    message = data['message']
+    message_type = data.get('type', 'text')  # 'text' or 'image'
+    
+    # Call OpenAIManager method to get assistant response
+    from .openai_client import OpenAIManager
+    try:
+        response = OpenAIManager.capivara_analista_chat(message, message_type, user_profile)
+        return jsonify({'success': True, 'response': response})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
