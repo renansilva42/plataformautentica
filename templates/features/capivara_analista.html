@@ -107,11 +107,18 @@
             contentElem.appendChild(img);
         } else {
             // Support paragraph breaks by splitting on newlines
-            content.split('\n').forEach(paragraph => {
-                const p = document.createElement('p');
-                p.textContent = paragraph;
-                contentElem.appendChild(p);
-            });
+            if (sender === 'assistant') {
+                // Render assistant response as HTML for better formatting
+                // Replace literal \n with <br> for line breaks
+                const formattedContent = content.replace(/\\n/g, '<br>');
+                contentElem.innerHTML = formattedContent;
+            } else {
+                content.split('\n').forEach(paragraph => {
+                    const p = document.createElement('p');
+                    p.textContent = paragraph;
+                    contentElem.appendChild(p);
+                });
+            }
         }
 
         messageElem.appendChild(contentElem);
@@ -161,8 +168,8 @@
             imageInput.value = '';
             return;
         }
-        if (file.size > 5 * 1024 * 1024) {
-            alert('Arquivo muito grande. O tamanho máximo é 5MB.');
+        if (file.size > 15 * 1024 * 1024) {
+            alert('Arquivo muito grande. O tamanho máximo é 15MB.');
             imageInput.value = '';
             return;
         }

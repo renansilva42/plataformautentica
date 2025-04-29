@@ -93,6 +93,16 @@
     margin-bottom: 0;
 }
 
+/* Ensure images inside messages fit within message area */
+.message-content img {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 8px;
+    object-fit: contain;
+    display: block;
+    margin: 0.25rem 0;
+}
+
 /* Input area styles */
 .input-area {
     display: flex;
