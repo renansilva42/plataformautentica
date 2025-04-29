@@ -1,13 +1,16 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, jsonify, session, current_app, request, send_from_directory
 from .auth import login_user, register_user, token_required
 from .supabase_client import SupabaseManager
 from .openai_client import OpenAIManager
 import os
+import base64
+import uuid
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
 
 # Create blueprint
 main = Blueprint('main', __name__)
+
 
 @main.route('/')
 def index():
@@ -337,19 +340,68 @@ def capivara_analista_chat():
     """Handle chat messages for Capivara Analista"""
     if 'token' not in session or 'user_id' not in session:
         return jsonify({'success': False, 'error': 'Authentication required'}), 401
-    
+
     user_id = session['user_id']
     success, user_profile = SupabaseManager.get_user_profile(user_id)
     if not success:
         return jsonify({'success': False, 'error': 'User profile not found'}), 404
-    
-    data = request.get_json()
-    if not data or 'message' not in data:
-        return jsonify({'success': False, 'error': 'No message provided'}), 400
-    
-    message = data['message']
-    message_type = data.get('type', 'text')  # 'text' or 'image'
-    
+
+    # Check if the request is JSON with base64 image data
+    if request.is_json:
+        data = request.get_json()
+        if not data or 'message' not in data:
+            return jsonify({'success': False, 'error': 'No message provided'}), 400
+
+        message = data['message']
+        message_type = data.get('type', 'text')  # 'text' or 'image' or 'image_base64'
+
+        # If image type and message is base64 data URI, extract base64 string and send as 'image_file'
+        if message_type == 'image' and isinstance(message, str) and message.startswith('data:image/'):
+            # Extract base64 data
+            header, encoded = message.split(',', 1)
+            file_ext = header.split('/')[1].split(';')[0]  # e.g. jpeg, png
+            if file_ext not in ['jpeg', 'jpg', 'png']:
+                return jsonify({'success': False, 'error': 'Unsupported image format'}), 400
+
+            # Validate base64
+            try:
+                base64.b64decode(encoded)
+            except Exception:
+                return jsonify({'success': False, 'error': 'Invalid base64 image data'}), 400
+
+            # Send base64 string directly to OpenAIManager with message_type 'image_file'
+            message = encoded
+            message_type = 'image_file'
+
+        elif message_type == 'image':
+            # If image type but not base64 data URI, reject
+            return jsonify({'success': False, 'error': 'Invalid image data. Expected base64 data URI.'}), 400
+
+    # Fallback: multipart/form-data image upload (deprecated, optional)
+    elif request.content_type.startswith('multipart/form-data'):
+        # Expecting an image file in 'image' field
+        if 'image' not in request.files:
+            return jsonify({'success': False, 'error': 'No image file provided'}), 400
+
+        image_file = request.files['image']
+
+        # Validate file extension
+        allowed_extensions = {'png', 'jpg', 'jpeg'}
+        def allowed_file(filename):
+            return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
+
+        if not allowed_file(image_file.filename):
+            return jsonify({'success': False, 'error': 'Invalid file type. Only png, jpg, jpeg allowed.'}), 400
+
+        # Read image bytes and encode as base64 data URI
+        img_bytes = image_file.read()
+        img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+        message = img_base64
+        message_type = 'image_file'
+
+    else:
+        return jsonify({'success': False, 'error': 'Unsupported content type'}), 400
+
     # Call OpenAIManager method to get assistant response
     from .openai_client import OpenAIManager
     try:
@@ -357,3 +409,9 @@ def capivara_analista_chat():
         return jsonify({'success': True, 'response': response})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@main.route('/uploads/<filename>')
+def uploaded_file(filename):
+    """Serve uploaded files"""
+    upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+    return send_from_directory(upload_folder, filename)
