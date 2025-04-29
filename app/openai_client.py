@@ -206,7 +206,9 @@ class OpenAIManager:
                     if isinstance(text_part, str):
                         assistant_response += clean_text(text_part)
                     elif isinstance(text_part, dict):
-                        assistant_response += clean_text(part.get('value', str(text_part)))
+                        # Extract 'value' key if present, else convert to string
+                        value_text = text_part.get('value') if 'value' in text_part else str(text_part)
+                        assistant_response += clean_text(value_text)
                     else:
                         assistant_response += clean_text(str(text_part))
 

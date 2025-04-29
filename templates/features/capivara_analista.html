@@ -54,158 +54,190 @@
 {% endblock %}
 {% block custom_js %}
 <script>
-    const messagesContainer = document.getElementById('messages');
-    const chatForm = document.getElementById('chat-form');
-    const messageInput = document.getElementById('message-input');
-    const imageInput = document.getElementById('image-input');
+const messagesContainer = document.getElementById('messages');
+const chatForm = document.getElementById('chat-form');
+const messageInput = document.getElementById('message-input');
+const imageInput = document.getElementById('image-input');
 
-    // Function to format current time as HH:MM
-    function formatTime(date) {
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+function formatTime(date) {
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function addMessage(content, sender, isImage = false) {
+  const messageElem = document.createElement('div');
+  messageElem.classList.add('message', sender);
+
+  const header = document.createElement('div');
+  header.classList.add('message-header');
+
+  const avatar = document.createElement('div');
+  avatar.classList.add('avatar');
+  avatar.setAttribute('aria-hidden', 'true');
+  avatar.innerHTML = sender === 'user' ? '<i class="fas fa-user-circle"></i>' : '<i class="fas fa-hippo"></i>';
+
+  const senderName = document.createElement('span');
+  senderName.classList.add('sender-name');
+  senderName.textContent = sender === 'user' ? 'Você' : 'Capivara Analista';
+
+  const timestamp = document.createElement('span');
+  timestamp.classList.add('timestamp');
+  timestamp.textContent = formatTime(new Date());
+
+  header.appendChild(avatar);
+  header.appendChild(senderName);
+  header.appendChild(timestamp);
+
+  messageElem.appendChild(header);
+
+  const contentElem = document.createElement('div');
+  contentElem.classList.add('message-content');
+
+  if (isImage) {
+    const img = document.createElement('img');
+    img.src = content;
+    img.alt = sender === 'user' ? 'Sua imagem' : 'Imagem da Capivara Analista';
+    contentElem.appendChild(img);
+  } else {
+    if (sender === 'assistant') {
+      const paragraphs = content.split(/(?:\\n){2,}/);
+      contentElem.innerHTML = '';
+      paragraphs.forEach(paragraph => {
+        const p = document.createElement('p');
+        p.innerHTML = paragraph.replace(/\\n/g, '<br>');
+        contentElem.appendChild(p);
+      });
+    } else {
+      content.split('\n').forEach(paragraph => {
+        const p = document.createElement('p');
+        p.textContent = paragraph;
+        contentElem.appendChild(p);
+      });
     }
+  }
 
-    // Function to create message element with sender, timestamp, avatar, and content with paragraphs
-    function addMessage(content, sender, isImage = false) {
-        const messageElem = document.createElement('div');
-        messageElem.classList.add('message', sender);
+  messageElem.appendChild(contentElem);
 
-        // Create header with avatar, sender name, and timestamp
-        const header = document.createElement('div');
-        header.classList.add('message-header');
+  messagesContainer.appendChild(messageElem);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
 
-        const avatar = document.createElement('div');
-        avatar.classList.add('avatar');
-        avatar.setAttribute('aria-hidden', 'true');
-        if (sender === 'user') {
-            avatar.innerHTML = '<i class="fas fa-user-circle"></i>';
-        } else {
-            avatar.innerHTML = '<i class="fas fa-hippo"></i>';
-        }
+chatForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = messageInput.value.trim();
+  if (!text) return;
 
-        const senderName = document.createElement('span');
-        senderName.classList.add('sender-name');
-        senderName.textContent = sender === 'user' ? 'Você' : 'Capivara Analista';
+  addMessage(text, 'user');
+  messageInput.value = '';
+  messageInput.focus();
 
-        const timestamp = document.createElement('span');
-        timestamp.classList.add('timestamp');
-        timestamp.textContent = formatTime(new Date());
+  const typingIndicator = document.createElement('div');
+  typingIndicator.classList.add('typing-indicator');
+  typingIndicator.textContent = 'Capivara Analista está digitando...';
 
-        header.appendChild(avatar);
-        header.appendChild(senderName);
-        header.appendChild(timestamp);
+  // Insert typing indicator below last user message or at end if none
+  const userMessages = messagesContainer.querySelectorAll('.message.user');
+  if (userMessages.length > 0) {
+    const lastUserMessage = userMessages[userMessages.length - 1];
+    lastUserMessage.insertAdjacentElement('afterend', typingIndicator);
+  } else {
+    messagesContainer.appendChild(typingIndicator);
+  }
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-        messageElem.appendChild(header);
-
-        // Create content container
-        const contentElem = document.createElement('div');
-        contentElem.classList.add('message-content');
-
-        if (isImage) {
-            const img = document.createElement('img');
-            img.src = content;
-            img.alt = sender === 'user' ? 'Sua imagem' : 'Imagem da Capivara Analista';
-            contentElem.appendChild(img);
-        } else {
-            // Support paragraph breaks by splitting on newlines
-            if (sender === 'assistant') {
-                // Render assistant response as HTML for better formatting
-                // Replace literal \n with <br> for line breaks
-                const formattedContent = content.replace(/\\n/g, '<br>');
-                contentElem.innerHTML = formattedContent;
-            } else {
-                content.split('\n').forEach(paragraph => {
-                    const p = document.createElement('p');
-                    p.textContent = paragraph;
-                    contentElem.appendChild(p);
-                });
-            }
-        }
-
-        messageElem.appendChild(contentElem);
-
-        messagesContainer.appendChild(messageElem);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  try {
+    const response = await fetch('{{ url_for("main.capivara_analista_chat") }}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text, type: 'text' })
+    });
+    const data = await response.json();
+    typingIndicator.remove();
+    if (data.success) {
+      addMessage(data.response, 'assistant');
+    } else {
+      addMessage('Erro: ' + data.error, 'assistant');
     }
+  } catch (error) {
+    typingIndicator.remove();
+    addMessage('Erro na comunicação com o servidor.', 'assistant');
+  }
+});
 
-    // Handle form submit
-    chatForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const text = messageInput.value.trim();
-        if (!text) return;
+imageInput.addEventListener('change', async () => {
+  const file = imageInput.files[0];
+  if (!file) return;
 
-        addMessage(text, 'user');
-        messageInput.value = '';
-        messageInput.focus();
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+  if (!allowedTypes.includes(file.type)) {
+    alert('Tipo de arquivo não suportado. Use JPG, PNG ou GIF.');
+    imageInput.value = '';
+    return;
+  }
+  if (file.size > 15 * 1024 * 1024) {
+    alert('Arquivo muito grande. O tamanho máximo é 15MB.');
+    imageInput.value = '';
+    return;
+  }
 
-        try {
-            const response = await fetch('{{ url_for("main.capivara_analista_chat") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ message: text, type: 'text' })
-            });
-            const data = await response.json();
-            if (data.success) {
-                addMessage(data.response, 'assistant');
-            } else {
-                addMessage('Erro: ' + data.error, 'assistant');
-            }
-        } catch (error) {
-            addMessage('Erro na comunicação com o servidor.', 'assistant');
-        }
-    });
+  const typingIndicator = document.createElement('div');
+  typingIndicator.classList.add('typing-indicator');
+  typingIndicator.textContent = 'Capivara Analista está digitando...';
+  messagesContainer.appendChild(typingIndicator);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-    // Handle image upload
-    imageInput.addEventListener('change', async () => {
-        const file = imageInput.files[0];
-        if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const base64Image = reader.result;
+    addMessage(base64Image, 'user', true);
 
-        // Validate file type and size (max 5MB)
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        if (!allowedTypes.includes(file.type)) {
-            alert('Tipo de arquivo não suportado. Use JPG, PNG ou GIF.');
-            imageInput.value = '';
-            return;
-        }
-        if (file.size > 15 * 1024 * 1024) {
-            alert('Arquivo muito grande. O tamanho máximo é 15MB.');
-            imageInput.value = '';
-            return;
-        }
+    try {
+      const response = await fetch('{{ url_for("main.capivara_analista_chat") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: base64Image, type: 'image' })
+      });
+      const data = await response.json();
+      typingIndicator.remove();
+      if (data.success) {
+        addMessage(data.response, 'assistant');
+      } else {
+        addMessage('Erro: ' + data.error, 'assistant');
+      }
+    } catch (error) {
+      typingIndicator.remove();
+      addMessage('Erro na comunicação com o servidor.', 'assistant');
+    }
+  };
+  reader.readAsDataURL(file);
+  imageInput.value = '';
+});
 
-        // Convert image to base64
-        const reader = new FileReader();
-        reader.onload = async () => {
-            const base64Image = reader.result;
-            addMessage(base64Image, 'user', true);
-
-            try {
-                const response = await fetch('{{ url_for("main.capivara_analista_chat") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ message: base64Image, type: 'image' })
-                });
-                const data = await response.json();
-                if (data.success) {
-                    addMessage(data.response, 'assistant');
-                } else {
-                    addMessage('Erro: ' + data.error, 'assistant');
-                }
-            } catch (error) {
-                addMessage('Erro na comunicação com o servidor.', 'assistant');
-            }
-        };
-        reader.readAsDataURL(file);
-        imageInput.value = '';
-    });
-
-    // Auto-expand textarea height
-    messageInput.addEventListener('input', () => {
-        messageInput.style.height = 'auto';
-        messageInput.style.height = messageInput.scrollHeight + 'px';
-    });
+messageInput.addEventListener('input', () => {
+  messageInput.style.height = 'auto';
+  messageInput.style.height = messageInput.scrollHeight + 'px';
+});
 </script>
+
+<style>
+.typing-indicator {
+  font-style: italic;
+  color: #6b7280;
+  margin-top: 0.75rem;
+  user-select: none;
+  animation: blink 1.4s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Fixed height and scroll for messages container */
+#messages {
+  height: 400px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  scroll-behavior: smooth;
+}
+</style>
 {% endblock %}
