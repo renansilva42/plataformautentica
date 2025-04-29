@@ -2,143 +2,10 @@
 
 {% block title %}Capivara Analista{% endblock %}
 
-{% block head_extra %}
+{% block custom_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
-<style>
-    /* Chat container */
-    .chat-container {
-        max-width: 800px;
-        margin: 2rem auto;
-        display: flex;
-        flex-direction: column;
-        height: 80vh;
-        border: 1px solid #ddd;
-        border-radius: 12px;
-        background-color: #f9f9f9;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-
-    /* Messages area */
-    .messages {
-        flex: 1;
-        padding: 1rem;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-        background-color: #fff;
-        border-bottom: 1px solid #ddd;
-        border-radius: 12px 12px 0 0;
-    }
-
-    /* Message bubbles */
-    .message {
-        max-width: 70%;
-        padding: 0.75rem 1rem;
-        border-radius: 20px;
-        font-size: 1rem;
-        line-height: 1.4;
-        word-wrap: break-word;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-
-    .message.user {
-        align-self: flex-end;
-        background-color: #007bff;
-        color: white;
-        border-bottom-right-radius: 4px;
-    }
-
-    .message.assistant {
-        align-self: flex-start;
-        background-color: #e5e5ea;
-        color: #000;
-        border-bottom-left-radius: 4px;
-    }
-
-    /* Image messages */
-    .message img {
-        max-width: 100%;
-        border-radius: 12px;
-    }
-
-    /* Input area */
-    .input-area {
-        display: flex;
-        padding: 0.5rem 1rem;
-        background-color: #fff;
-        border-radius: 0 0 12px 12px;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .input-area textarea {
-        flex: 1;
-        resize: none;
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        border: 1px solid #ccc;
-        font-size: 1rem;
-        font-family: inherit;
-        height: 40px;
-        transition: height 0.2s;
-    }
-
-    .input-area textarea:focus {
-        outline: none;
-        border-color: #007bff;
-    }
-
-    .input-area button {
-        background-color: #007bff;
-        border: none;
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        cursor: pointer;
-        font-size: 1rem;
-        transition: background-color 0.2s;
-    }
-
-    .input-area button:hover {
-        background-color: #0056b3;
-    }
-
-    /* Hidden file input */
-    #image-input {
-        display: none;
-    }
-
-    /* Image upload button */
-    .image-upload-label {
-        background-color: #28a745;
-        padding: 0.5rem 0.75rem;
-        border-radius: 20px;
-        color: white;
-        cursor: pointer;
-        font-size: 1.2rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background-color 0.2s;
-    }
-
-    .image-upload-label:hover {
-        background-color: #1e7e34;
-    }
-
-    /* Scrollbar styling */
-    .messages::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    .messages::-webkit-scrollbar-thumb {
-        background-color: rgba(0,0,0,0.1);
-        border-radius: 4px;
-    }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/capivara_analista.css') }}?v=1.0.1">
 {% endblock %}
-
 {% block content %}
 <div class="home-container">
     <header class="app-header">
@@ -165,6 +32,9 @@
 
     <main class="main-content">
         <div class="chat-container" aria-label="Chat Capivara Analista">
+            <div class="chat-header" aria-label="Cabeçalho do chat">
+                Capivara Analista
+            </div>
             <div class="messages" id="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
             <form id="chat-form" class="input-area" aria-label="Enviar mensagem">
                 <textarea id="message-input" placeholder="Digite sua mensagem..." rows="1" aria-label="Mensagem"></textarea>
@@ -182,7 +52,6 @@
     </footer>
 </div>
 {% endblock %}
-
 {% block custom_js %}
 <script>
     const messagesContainer = document.getElementById('messages');
@@ -190,18 +59,63 @@
     const messageInput = document.getElementById('message-input');
     const imageInput = document.getElementById('image-input');
 
-    // Function to add message to chat
+    // Function to format current time as HH:MM
+    function formatTime(date) {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // Function to create message element with sender, timestamp, avatar, and content with paragraphs
     function addMessage(content, sender, isImage = false) {
         const messageElem = document.createElement('div');
         messageElem.classList.add('message', sender);
+
+        // Create header with avatar, sender name, and timestamp
+        const header = document.createElement('div');
+        header.classList.add('message-header');
+
+        const avatar = document.createElement('div');
+        avatar.classList.add('avatar');
+        avatar.setAttribute('aria-hidden', 'true');
+        if (sender === 'user') {
+            avatar.innerHTML = '<i class="fas fa-user-circle"></i>';
+        } else {
+            avatar.innerHTML = '<i class="fas fa-hippo"></i>';
+        }
+
+        const senderName = document.createElement('span');
+        senderName.classList.add('sender-name');
+        senderName.textContent = sender === 'user' ? 'Você' : 'Capivara Analista';
+
+        const timestamp = document.createElement('span');
+        timestamp.classList.add('timestamp');
+        timestamp.textContent = formatTime(new Date());
+
+        header.appendChild(avatar);
+        header.appendChild(senderName);
+        header.appendChild(timestamp);
+
+        messageElem.appendChild(header);
+
+        // Create content container
+        const contentElem = document.createElement('div');
+        contentElem.classList.add('message-content');
+
         if (isImage) {
             const img = document.createElement('img');
             img.src = content;
             img.alt = sender === 'user' ? 'Sua imagem' : 'Imagem da Capivara Analista';
-            messageElem.appendChild(img);
+            contentElem.appendChild(img);
         } else {
-            messageElem.textContent = content;
+            // Support paragraph breaks by splitting on newlines
+            content.split('\n').forEach(paragraph => {
+                const p = document.createElement('p');
+                p.textContent = paragraph;
+                contentElem.appendChild(p);
+            });
         }
+
+        messageElem.appendChild(contentElem);
+
         messagesContainer.appendChild(messageElem);
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }

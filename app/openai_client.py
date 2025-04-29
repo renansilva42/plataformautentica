@@ -188,15 +188,27 @@ class OpenAIManager:
             content_parts = latest_assistant_message.get('content', [])
             assistant_response = ""
 
+            import re
+
+            def clean_text(text):
+                # Remove markdown characters like **, ##, etc.
+                text = re.sub(r'(\*\*|__)(.*?)\1', r'\2', text)  # bold
+                text = re.sub(r'(\*|_)(.*?)\1', r'\2', text)      # italic
+                text = re.sub(r'#+ ', '', text)                   # headers
+                text = re.sub(r'`{1,3}.*?`{1,3}', '', text)      # inline code
+                text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)  # links
+                text = re.sub(r'[{}#]', '', text)                 # remove braces and hashes
+                return text.strip()
+
             for part in content_parts:
                 if part.get('type') == 'text':
                     text_part = part.get('text', '')
                     if isinstance(text_part, str):
-                        assistant_response += text_part
+                        assistant_response += clean_text(text_part)
                     elif isinstance(text_part, dict):
-                        assistant_response += part.get('value', str(text_part))
+                        assistant_response += clean_text(part.get('value', str(text_part)))
                     else:
-                        assistant_response += str(text_part)
+                        assistant_response += clean_text(str(text_part))
 
             if not assistant_response:
                 raise Exception("Conteúdo da resposta do assistente vazio")
