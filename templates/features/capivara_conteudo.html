@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}Capivara do Conteúdo{% endblock %}
+
+{% block custom_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/capivara_analista.css') }}?v=1.0.1">
+{% endblock %}
+{% block content %}
+<div class="home-container">
+    <header class="app-header">
+        <div class="logo-container">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Logo Autêntica">
+            </div>
+            <h1 class="brand-name">AUTÊNTICA</h1>
+        </div>
+        <div class="user-menu">
+            <div class="user-info">
+                <span class="user-name">{{ user.nome }}</span>
+                <div class="user-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </div>
+            <div class="dropdown-menu">
+                <a href="{{ url_for('main.logout') }}" class="menu-item">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="chat-container" aria-label="Chat Capivara do Conteúdo">
+            <div class="chat-header" aria-label="Cabeçalho do chat">
+                Capivara do Conteúdo
+            </div>
+            <div class="messages" id="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
+            <form id="chat-form" class="input-area" aria-label="Enviar mensagem">
+                <textarea id="message-input" placeholder="Digite sua mensagem..." rows="1" aria-label="Mensagem"></textarea>
+                <button type="submit" aria-label="Enviar mensagem"><i class="fas fa-paper-plane"></i></button>
+            </form>
+        </div>
+    </main>
+
+    <footer class="app-footer">
+        <p>&copy; 2025 Autêntica by Órizen. Todos os direitos reservados.</p>
+    </footer>
+</div>
+{% endblock %}
+{% block custom_js %}
+<script>
+const messagesContainer = document.getElementById('messages');
+const chatForm = document.getElementById('chat-form');
+const messageInput = document.getElementById('message-input');
+
+function formatTime(date) {
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function addMessage(content, sender, isImage = false) {
+  const messageElem = document.createElement('div');
+  messageElem.classList.add('message', sender);
+
+  const header = document.createElement('div');
+  header.classList.add('message-header');
+
+  const avatar = document.createElement('div');
+  avatar.classList.add('avatar');
+  avatar.setAttribute('aria-hidden', 'true');
+  avatar.innerHTML = sender === 'user' ? '<i class="fas fa-user-circle"></i>' : '<i class="fas fa-hippo"></i>';
+
+  const senderName = document.createElement('span');
+  senderName.classList.add('sender-name');
+  senderName.textContent = sender === 'user' ? 'Você' : 'Capivara do Conteúdo';
+
+  const timestamp = document.createElement('span');
+  timestamp.classList.add('timestamp');
+  timestamp.textContent = formatTime(new Date());
+
+  header.appendChild(avatar);
+  header.appendChild(senderName);
+  header.appendChild(timestamp);
+
+  messageElem.appendChild(header);
+
+  const contentElem = document.createElement('div');
+  contentElem.classList.add('message-content');
+
+  if (isImage) {
+    const img = document.createElement('img');
+    img.src = content;
+    img.alt = sender === 'user' ? 'Sua imagem' : 'Imagem da Capivara do Conteúdo';
+    contentElem.appendChild(img);
+  } else {
+    if (sender === 'assistant') {
+      const paragraphs = content.split(/(?:\\n){2,}/);
+      contentElem.innerHTML = '';
+      paragraphs.forEach(paragraph => {
+        const p = document.createElement('p');
+        p.innerHTML = paragraph.replace(/\\n/g, '<br>');
+        contentElem.appendChild(p);
+      });
+    } else {
+      content.split('\\n').forEach(paragraph => {
+        const p = document.createElement('p');
+        p.textContent = paragraph;
+        contentElem.appendChild(p);
+      });
+    }
+  }
+
+  messageElem.appendChild(contentElem);
+
+  messagesContainer.appendChild(messageElem);
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+chatForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = messageInput.value.trim();
+  if (!text) return;
+
+  addMessage(text, 'user');
+  messageInput.value = '';
+  messageInput.focus();
+
+  const typingIndicator = document.createElement('div');
+  typingIndicator.classList.add('typing-indicator');
+  typingIndicator.textContent = 'Capivara do Conteúdo está digitando...';
+
+  // Insert typing indicator below last user message or at end if none
+  const userMessages = messagesContainer.querySelectorAll('.message.user');
+  if (userMessages.length > 0) {
+    const lastUserMessage = userMessages[userMessages.length - 1];
+    lastUserMessage.insertAdjacentElement('afterend', typingIndicator);
+  } else {
+    messagesContainer.appendChild(typingIndicator);
+  }
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+  try {
+    const response = await fetch('{{ url_for("main.capivara_conteudo_chat") }}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text, type: 'text' })
+    });
+    const data = await response.json();
+    typingIndicator.remove();
+    if (data.success) {
+      addMessage(data.response, 'assistant');
+    } else {
+      addMessage('Erro: ' + data.error, 'assistant');
+    }
+  } catch (error) {
+    typingIndicator.remove();
+    addMessage('Erro na comunicação com o servidor.', 'assistant');
+  }
+});
+
+messageInput.addEventListener('input', () => {
+  messageInput.style.height = 'auto';
+  messageInput.style.height = messageInput.scrollHeight + 'px';
+});
+</script>
+
+<style>
+.typing-indicator {
+  font-style: italic;
+  color: #6b7280;
+  margin-top: 0.75rem;
+  user-select: none;
+  animation: blink 1.4s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Fixed height and scroll for messages container */
+#messages {
+  height: 400px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  scroll-behavior: smooth;
+}
+</style>
+{% endblock %}

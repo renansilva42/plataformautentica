@@ -415,3 +415,47 @@ def uploaded_file(filename):
     """Serve uploaded files"""
     upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
     return send_from_directory(upload_folder, filename)
+
+@main.route('/capivara-conteudo')
+def capivara_conteudo():
+    """Render the Capivara do Conteúdo chat page"""
+    if 'token' not in session or 'user_id' not in session:
+        flash("Please log in to access this page")
+        return redirect(url_for('main.login'))
+    
+    user_id = session['user_id']
+    success, user_profile = SupabaseManager.get_user_profile(user_id)
+    
+    if not success:
+        flash("Error loading user profile")
+        return redirect(url_for('main.login'))
+    
+    return render_template('features/capivara_conteudo.html', user=user_profile)
+
+@main.route('/capivara-conteudo/chat', methods=['POST'])
+def capivara_conteudo_chat():
+    """Handle chat messages for Capivara do Conteúdo"""
+    if 'token' not in session or 'user_id' not in session:
+        return jsonify({'success': False, 'error': 'Authentication required'}), 401
+
+    user_id = session['user_id']
+    success, user_profile = SupabaseManager.get_user_profile(user_id)
+    if not success:
+        return jsonify({'success': False, 'error': 'User profile not found'}), 404
+
+    if not request.is_json:
+        return jsonify({'success': False, 'error': 'Invalid request format'}), 400
+
+    data = request.get_json()
+    if not data or 'message' not in data:
+        return jsonify({'success': False, 'error': 'No message provided'}), 400
+
+    message = data['message']
+    message_type = data.get('type', 'text')  # Only 'text' expected, no images
+
+    from .openai_client import OpenAIManager
+    try:
+        response = OpenAIManager.capivara_conteudo_chat(message, message_type, user_profile)
+        return jsonify({'success': True, 'response': response})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
