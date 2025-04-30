@@ -319,9 +319,14 @@ def skill_c():
     
     return render_template('features/skill_c.html', user=user_profile)
 
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 @main.route('/capivara-analista')
 def capivara_analista():
     """Render the Capivara Analista chat page"""
+    from flask import current_app
+    import logging
     if 'token' not in session or 'user_id' not in session:
         flash("Please log in to access this page")
         return redirect(url_for('main.login'))
@@ -332,6 +337,25 @@ def capivara_analista():
     if not success:
         flash("Error loading user profile")
         return redirect(url_for('main.login'))
+    
+    access_expiration_str = user_profile.get('access_expiration')
+    current_app.logger.debug(f"Access expiration string: {access_expiration_str}")
+    if access_expiration_str:
+        try:
+            access_expiration = datetime.fromisoformat(access_expiration_str)
+            # Make access_expiration timezone-aware in America/Belem timezone if naive
+            if access_expiration.tzinfo is None:
+                access_expiration = access_expiration.replace(tzinfo=ZoneInfo("America/Belem"))
+            now = datetime.now(ZoneInfo("America/Belem"))
+            current_app.logger.debug(f"Current time: {now}, Access expiration: {access_expiration}")
+            if now > access_expiration:
+                current_app.logger.info("Access expired, redirecting to home")
+                flash("Seu acesso expirou. Redirecionando para a página inicial.")
+                return redirect(url_for('main.home'))
+        except Exception as e:
+            current_app.logger.error(f"Error parsing access_expiration: {e}")
+            # If parsing fails, allow access (or optionally block)
+            pass
     
     return render_template('features/capivara_analista.html', user=user_profile)
 
@@ -419,6 +443,8 @@ def uploaded_file(filename):
 @main.route('/capivara-conteudo')
 def capivara_conteudo():
     """Render the Capivara do Conteúdo chat page"""
+    from flask import current_app
+    import logging
     if 'token' not in session or 'user_id' not in session:
         flash("Please log in to access this page")
         return redirect(url_for('main.login'))
@@ -429,6 +455,25 @@ def capivara_conteudo():
     if not success:
         flash("Error loading user profile")
         return redirect(url_for('main.login'))
+    
+    access_expiration_str = user_profile.get('access_expiration')
+    current_app.logger.debug(f"Access expiration string: {access_expiration_str}")
+    if access_expiration_str:
+        try:
+            access_expiration = datetime.fromisoformat(access_expiration_str)
+            now = datetime.now(ZoneInfo("America/Belem"))
+            # Make access_expiration timezone-aware in America/Belem timezone if naive
+            if access_expiration.tzinfo is None:
+                access_expiration = access_expiration.replace(tzinfo=ZoneInfo("America/Belem"))
+            current_app.logger.debug(f"Current time: {now}, Access expiration: {access_expiration}")
+            if now > access_expiration:
+                current_app.logger.info("Access expired, redirecting to home")
+                flash("Seu acesso expirou. Redirecionando para a página inicial.")
+                return redirect(url_for('main.home'))
+        except Exception as e:
+            current_app.logger.error(f"Error parsing access_expiration: {e}")
+            # If parsing fails, allow access (or optionally block)
+            pass
     
     return render_template('features/capivara_conteudo.html', user=user_profile)
 
