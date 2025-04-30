@@ -175,7 +175,7 @@
         
         <!-- Buttons Grid Layout -->
         <div class="buttons-grid">
-            <a href="{{ url_for('main.skill_a') }}" class="feature-button unlocked" id="skill-a">
+            <a href="{{ url_for('main.skill_a') }}" class="feature-button unlocked" id="skill-a" style="display:none;">
                 <img src="{{ url_for('static', filename='img/icons/skill-a.jpeg') }}" alt="Skill A">
                 <div class="button-content">
                     <span class="button-name">Análise de Perfil</span>
@@ -183,21 +183,13 @@
             </a>
 
             <a href="{{ url_for('main.capivara_analista') }}" class="feature-button unlocked" id="capivara-analista">
-                <img src="{{ url_for('static', filename='img/icons/capivara-editorial.jpeg') }}" alt="Capivara Analista">
+                <img src="{{ url_for('static', filename='img/icons/skill-a.jpeg') }}" alt="Capivara Analista">
                 <div class="button-content">
                     <span class="button-name">Capivara Analista</span>
                 </div>
             </a>
-
-            <a href="{{ url_for('main.capivara_conteudo') }}" class="feature-button unlocked" id="capivara-conteudo">
-                <img src="{{ url_for('static', filename='img/icons/capivara-conteudo.jpeg') }}" alt="Capivara do Conteúdo">
-                <div class="button-content">
-                    <span class="button-name">Capivara do Conteúdo</span>
-                </div>
-            </a>
-
             <!-- Locked Capivara Editorial Button -->
-            <div class="feature-button locked" id="capivara-editorial">
+            <div class="feature-button locked" id="capivara-editorial" style="display:none;">
                 <img src="{{ url_for('static', filename='img/icons/capivara-editorial.jpeg') }}" alt="Capivara Editorial">
                 <div class="lock-overlay">
                     <i class="fas fa-lock lock-icon"></i>
@@ -207,8 +199,15 @@
                 </div>
             </div>
 
+            <a href="{{ url_for('main.capivara_conteudo') }}" class="feature-button unlocked" id="capivara-conteudo">
+                <img src="{{ url_for('static', filename='img/icons/capivara-conteudo.jpeg') }}" alt="Capivara do Conteúdo">
+                <div class="button-content">
+                    <span class="button-name">Capivara do Conteúdo</span>
+                </div>
+            </a>
+
             <!-- Locked Buttons -->
-            <div class="feature-button locked">
+            <div class="feature-button locked" style="display:none;">
                 <img src="{{ url_for('static', filename='img/icons/capivara-tracao.jpeg') }}" alt="Capivara Tração">
                 <div class="lock-overlay">
                     <i class="fas fa-lock lock-icon"></i>
@@ -218,7 +217,7 @@
                 </div>
             </div>
             
-            <div class="feature-button locked">
+            <div class="feature-button locked" style="display:none;">
                 <img src="{{ url_for('static', filename='img/icons/capivara-brechas.jpeg') }}" alt="Capivara das Brechas">
                 <div class="lock-overlay">
                     <i class="fas fa-lock lock-icon"></i>
@@ -227,54 +226,6 @@
                     <span class="button-name">Capivara das Brechas</span>
                 </div>
             </div>
-            
-            {#
-            <div class="feature-button locked">
-                <img src="{{ url_for('static', filename='img/icons/capivara-corretora.jpeg') }}" alt="Capivara Corretora Ortográfica">
-                <div class="lock-overlay">
-                    <i class="fas fa-lock lock-icon"></i>
-                </div>
-                <div class="button-content">
-                    <span class="button-name">Capivara Corretora Ortográfica</span>
-                </div>
-            </div>
-            #}
-            
-            {#
-            <div class="feature-button locked">
-                <img src="{{ url_for('static', filename='img/icons/cfo.jpeg') }}" alt="CFO">
-                <div class="lock-overlay">
-                    <i class="fas fa-lock lock-icon"></i>
-                </div>
-                <div class="button-content">
-                    <span class="button-name">CFO</span>
-                </div>
-            </div>
-            #}
-            
-            {#
-            <div class="feature-button locked">
-                <img src="{{ url_for('static', filename='img/icons/willian-ai.jpeg') }}" alt="Willian AI">
-                <div class="lock-overlay">
-                    <i class="fas fa-lock lock-icon"></i>
-                </div>
-                <div class="button-content">
-                    <span class="button-name">Willian AI</span>
-                </div>
-            </div>
-            #}
-            
-            {#
-            <div class="feature-button locked">
-                <img src="{{ url_for('static', filename='img/icons/ipm.jpeg') }}" alt="IPM">
-                <div class="lock-overlay">
-                    <i class="fas fa-lock lock-icon"></i>
-                </div>
-                <div class="button-content">
-                    <span class="button-name">IPM</span>
-                </div>
-            </div>
-            #}
         </div>
     </main>
     
