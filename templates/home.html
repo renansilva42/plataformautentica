@@ -370,10 +370,60 @@
 
             const diff = expirationDate - now;
 
+            const capivaraAnalistaBtn = document.getElementById('capivara-analista');
+            const capivaraConteudoBtn = document.getElementById('capivara-conteudo');
+
             if (diff <= 0) {
                 countdownElement.textContent = "Expirado";
                 expirationContainer.classList.add('expiration-urgent');
+
+                // Lock the Capivara Analista button
+                if (capivaraAnalistaBtn) {
+                    capivaraAnalistaBtn.classList.remove('unlocked');
+                    capivaraAnalistaBtn.classList.add('locked');
+                    if (!capivaraAnalistaBtn.querySelector('.lock-overlay')) {
+                        const lockOverlay = document.createElement('div');
+                        lockOverlay.className = 'lock-overlay';
+                        lockOverlay.innerHTML = '<i class="fas fa-lock lock-icon"></i>';
+                        capivaraAnalistaBtn.appendChild(lockOverlay);
+                    }
+                    capivaraAnalistaBtn.style.pointerEvents = 'none';
+                }
+
+                // Lock the Capivara do Conteúdo button
+                if (capivaraConteudoBtn) {
+                    capivaraConteudoBtn.classList.remove('unlocked');
+                    capivaraConteudoBtn.classList.add('locked');
+                    if (!capivaraConteudoBtn.querySelector('.lock-overlay')) {
+                        const lockOverlay = document.createElement('div');
+                        lockOverlay.className = 'lock-overlay';
+                        lockOverlay.innerHTML = '<i class="fas fa-lock lock-icon"></i>';
+                        capivaraConteudoBtn.appendChild(lockOverlay);
+                    }
+                    capivaraConteudoBtn.style.pointerEvents = 'none';
+                }
+
                 return;
+            } else {
+                // Unlock the buttons if previously locked
+                if (capivaraAnalistaBtn) {
+                    capivaraAnalistaBtn.classList.remove('locked');
+                    capivaraAnalistaBtn.classList.add('unlocked');
+                    const lockOverlay = capivaraAnalistaBtn.querySelector('.lock-overlay');
+                    if (lockOverlay) {
+                        capivaraAnalistaBtn.removeChild(lockOverlay);
+                    }
+                    capivaraAnalistaBtn.style.pointerEvents = 'auto';
+                }
+                if (capivaraConteudoBtn) {
+                    capivaraConteudoBtn.classList.remove('locked');
+                    capivaraConteudoBtn.classList.add('unlocked');
+                    const lockOverlay = capivaraConteudoBtn.querySelector('.lock-overlay');
+                    if (lockOverlay) {
+                        capivaraConteudoBtn.removeChild(lockOverlay);
+                    }
+                    capivaraConteudoBtn.style.pointerEvents = 'auto';
+                }
             }
 
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
