@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Perfil do Usuário{% endblock %}
+
+{% block content %}
+<h1>Perfil do Usuário</h1>
+
+<div>
+  <h2>Foto de Perfil</h2>
+  {% if user.profile_photo_url %}
+    <img src="{{ user.profile_photo_url }}" alt="Foto de Perfil" style="max-width: 200px; max-height: 200px;">
+  {% else %}
+    <p>Você ainda não enviou uma foto de perfil.</p>
+  {% endif %}
+  <form id="upload-photo-form" method="POST" enctype="multipart/form-data" action="{{ url_for('main.upload_profile_photo') }}">
+    <input type="file" name="photo" accept="image/png, image/jpeg" required>
+    <button type="submit">Enviar Foto</button>
+  </form>
+  <div id="upload-result"></div>
+</div>
+
+<div>
+  <h2>Informações do Perfil</h2>
+  <form id="profile-info-form" method="POST" action="#">
+    <label for="nome">Nome:</label>
+    <input type="text" id="nome" name="nome" value="{{ user.nome or '' }}" disabled>
+
+    <label for="telefone">Telefone:</label>
+    <input type="text" id="telefone" name="telefone" value="{{ user.telefone or '' }}" disabled>
+
+    <label for="instagram">Instagram:</label>
+    <input type="text" id="instagram" name="instagram" value="{{ user.instagram or '' }}" disabled>
+
+    <!-- Additional fields can be added here -->
+
+    <!-- For now, fields are disabled; editing functionality can be added later -->
+  </form>
+</div>
+
+<script>
+document.getElementById('upload-photo-form').addEventListener('submit', async function(event) {
+  event.preventDefault();
+  const formData = new FormData(this);
+  const response = await fetch(this.action, {
+    method: 'POST',
+    body: formData
+  });
+  const result = await response.json();
+  const resultDiv = document.getElementById('upload-result');
+  if (result.success) {
+    resultDiv.textContent = 'Foto enviada com sucesso!';
+    // Update the profile photo image src
+    const img = document.querySelector('img[alt="Foto de Perfil"]');
+    if (img) {
+      img.src = result.photo_url + '?t=' + new Date().getTime(); // cache bust
+    } else {
+      // If no image element, reload page to show new photo
+      location.reload();
+    }
+  } else {
+    resultDiv.textContent = 'Erro ao enviar foto: ' + result.error;
+  }
+});
+</script>
+
+{% endblock %}

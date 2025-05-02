@@ -253,6 +253,9 @@
                 </div>
             </div>
             <div class="dropdown-menu">
+                <a href="{{ url_for('main.profile') }}" class="menu-item">
+                    <i class="fas fa-user"></i> Meu Perfil
+                </a>
                 <a href="{{ url_for('main.logout') }}" class="menu-item">
                     <i class="fas fa-sign-out-alt"></i> Sair
                 </a>
@@ -340,113 +343,114 @@
 
 {% block custom_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Add a click event for locked buttons to show a message
-        document.querySelectorAll('.feature-button.locked').forEach(function(button) {
-            button.addEventListener('click', function() {
-                alert('Esta funcionalidade ainda não está disponível para o seu perfil.');
-            });
+document.addEventListener('DOMContentLoaded', function() {
+    // Add a click event for locked buttons to show a message
+    document.querySelectorAll('.feature-button.locked').forEach(function(button) {
+        button.addEventListener('click', function() {
+            alert('Esta funcionalidade ainda não está disponível para o seu perfil.');
         });
+    });
 
         // Countdown timer for access expiration
-        const accessExpirationRaw = {{ access_expiration|tojson }};
+        const accessExpirationRaw = "{{ access_expiration }}";
         const countdownElement = document.getElementById('countdown-timer');
         const expirationContainer = document.getElementById('expiration-status');
 
-        function updateCountdown() {
-            if (!accessExpirationRaw) {
-                countdownElement.textContent = "Data de expiração não disponível";
-                return;
+
+    function updateCountdown() {
+        if (!accessExpirationRaw) {
+            countdownElement.textContent = "Data de expiração não disponível";
+            return;
+        }
+
+        // Parse the ISO string safely by replacing space with T if needed
+        let isoString = accessExpirationRaw.trim();
+        if (!isoString.includes('T') && isoString.includes(' ')) {
+            isoString = isoString.replace(' ', 'T');
+        }
+
+        const expirationDate = new Date(isoString);
+        const now = new Date();
+
+        const diff = expirationDate - now;
+
+        const capivaraAnalistaBtn = document.getElementById('capivara-analista');
+        const capivaraConteudoBtn = document.getElementById('capivara-conteudo');
+
+        if (diff <= 0) {
+            countdownElement.textContent = "Expirado";
+            expirationContainer.classList.add('expiration-urgent');
+
+            // Lock the Capivara Analista button
+            if (capivaraAnalistaBtn) {
+                capivaraAnalistaBtn.classList.remove('unlocked');
+                capivaraAnalistaBtn.classList.add('locked');
+                if (!capivaraAnalistaBtn.querySelector('.lock-overlay')) {
+                    const lockOverlay = document.createElement('div');
+                    lockOverlay.className = 'lock-overlay';
+                    lockOverlay.innerHTML = '<i class="fas fa-lock lock-icon"></i>';
+                    capivaraAnalistaBtn.appendChild(lockOverlay);
+                }
+                capivaraAnalistaBtn.style.pointerEvents = 'none';
             }
 
-            // Parse the ISO string safely by replacing space with T if needed
-            let isoString = accessExpirationRaw.trim();
-            if (!isoString.includes('T') && isoString.includes(' ')) {
-                isoString = isoString.replace(' ', 'T');
+            // Lock the Capivara do Conteúdo button
+            if (capivaraConteudoBtn) {
+                capivaraConteudoBtn.classList.remove('unlocked');
+                capivaraConteudoBtn.classList.add('locked');
+                if (!capivaraConteudoBtn.querySelector('.lock-overlay')) {
+                    const lockOverlay = document.createElement('div');
+                    lockOverlay.className = 'lock-overlay';
+                    lockOverlay.innerHTML = '<i class="fas fa-lock lock-icon"></i>';
+                    capivaraConteudoBtn.appendChild(lockOverlay);
+                }
+                capivaraConteudoBtn.style.pointerEvents = 'none';
             }
 
-            const expirationDate = new Date(isoString);
-            const now = new Date();
-
-            const diff = expirationDate - now;
-
-            const capivaraAnalistaBtn = document.getElementById('capivara-analista');
-            const capivaraConteudoBtn = document.getElementById('capivara-conteudo');
-
-            if (diff <= 0) {
-                countdownElement.textContent = "Expirado";
-                expirationContainer.classList.add('expiration-urgent');
-
-                // Lock the Capivara Analista button
-                if (capivaraAnalistaBtn) {
-                    capivaraAnalistaBtn.classList.remove('unlocked');
-                    capivaraAnalistaBtn.classList.add('locked');
-                    if (!capivaraAnalistaBtn.querySelector('.lock-overlay')) {
-                        const lockOverlay = document.createElement('div');
-                        lockOverlay.className = 'lock-overlay';
-                        lockOverlay.innerHTML = '<i class="fas fa-lock lock-icon"></i>';
-                        capivaraAnalistaBtn.appendChild(lockOverlay);
-                    }
-                    capivaraAnalistaBtn.style.pointerEvents = 'none';
+            return;
+        } else {
+            // Unlock the buttons if previously locked
+            if (capivaraAnalistaBtn) {
+                capivaraAnalistaBtn.classList.remove('locked');
+                capivaraAnalistaBtn.classList.add('unlocked');
+                const lockOverlay = capivaraAnalistaBtn.querySelector('.lock-overlay');
+                if (lockOverlay) {
+                    capivaraAnalistaBtn.removeChild(lockOverlay);
                 }
-
-                // Lock the Capivara do Conteúdo button
-                if (capivaraConteudoBtn) {
-                    capivaraConteudoBtn.classList.remove('unlocked');
-                    capivaraConteudoBtn.classList.add('locked');
-                    if (!capivaraConteudoBtn.querySelector('.lock-overlay')) {
-                        const lockOverlay = document.createElement('div');
-                        lockOverlay.className = 'lock-overlay';
-                        lockOverlay.innerHTML = '<i class="fas fa-lock lock-icon"></i>';
-                        capivaraConteudoBtn.appendChild(lockOverlay);
-                    }
-                    capivaraConteudoBtn.style.pointerEvents = 'none';
-                }
-
-                return;
-            } else {
-                // Unlock the buttons if previously locked
-                if (capivaraAnalistaBtn) {
-                    capivaraAnalistaBtn.classList.remove('locked');
-                    capivaraAnalistaBtn.classList.add('unlocked');
-                    const lockOverlay = capivaraAnalistaBtn.querySelector('.lock-overlay');
-                    if (lockOverlay) {
-                        capivaraAnalistaBtn.removeChild(lockOverlay);
-                    }
-                    capivaraAnalistaBtn.style.pointerEvents = 'auto';
-                }
-                if (capivaraConteudoBtn) {
-                    capivaraConteudoBtn.classList.remove('locked');
-                    capivaraConteudoBtn.classList.add('unlocked');
-                    const lockOverlay = capivaraConteudoBtn.querySelector('.lock-overlay');
-                    if (lockOverlay) {
-                        capivaraConteudoBtn.removeChild(lockOverlay);
-                    }
-                    capivaraConteudoBtn.style.pointerEvents = 'auto';
-                }
+                capivaraAnalistaBtn.style.pointerEvents = 'auto';
             }
-
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-            const minutes = Math.floor((diff / 1000 / 60) % 60);
-            const seconds = Math.floor((diff / 1000) % 60);
-
-            const formattedTime = days > 0
-                ? `${days} dia${days !== 1 ? 's' : ''} ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
-                : `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-
-            countdownElement.textContent = formattedTime;
-            
-            // Adicionar classes de urgência baseadas no tempo restante
-            if (days === 0 && hours < 12) {
-                expirationContainer.classList.add('expiration-urgent');
-            } else if (days < 3) {
-                expirationContainer.classList.add('expiration-warning');
+            if (capivaraConteudoBtn) {
+                capivaraConteudoBtn.classList.remove('locked');
+                capivaraConteudoBtn.classList.add('unlocked');
+                const lockOverlay = capivaraConteudoBtn.querySelector('.lock-overlay');
+                if (lockOverlay) {
+                    capivaraConteudoBtn.removeChild(lockOverlay);
+                }
+                capivaraConteudoBtn.style.pointerEvents = 'auto';
             }
         }
 
-        updateCountdown();
-        setInterval(updateCountdown, 1000);
-    });
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const minutes = Math.floor((diff / 1000 / 60) % 60);
+        const seconds = Math.floor((diff / 1000) % 60);
+
+        const formattedTime = days > 0
+            ? `${days} dia${days !== 1 ? 's' : ''} ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+            : `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+        countdownElement.textContent = formattedTime;
+        
+        // Adicionar classes de urgência baseadas no tempo restante
+        if (days === 0 && hours < 12) {
+            expirationContainer.classList.add('expiration-urgent');
+        } else if (days < 3) {
+            expirationContainer.classList.add('expiration-warning');
+        }
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+});
 </script>
 {% endblock %}

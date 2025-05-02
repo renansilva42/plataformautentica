@@ -504,3 +504,61 @@ def capivara_conteudo_chat():
         return jsonify({'success': True, 'response': response})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@main.route('/profile', methods=['GET'])
+def profile():
+    """Render the user profile page"""
+    if 'token' not in session or 'user_id' not in session:
+        flash("Please log in to access your profile")
+        return redirect(url_for('main.login'))
+
+    user_id = session['user_id']
+    success, user_profile = SupabaseManager.get_user_profile(user_id)
+
+    if not success:
+        flash("Error loading user profile")
+        return redirect(url_for('main.login'))
+
+    return render_template('features/profile.html', user=user_profile)
+
+@main.route('/profile/upload-photo', methods=['POST'])
+def upload_profile_photo():
+    """Handle profile photo upload"""
+    if 'token' not in session or 'user_id' not in session:
+        return jsonify({'success': False, 'error': 'Authentication required'}), 401
+
+    if 'photo' not in request.files:
+        return jsonify({'success': False, 'error': 'No photo file provided'}), 400
+
+    photo = request.files['photo']
+
+    # Validate file extension
+    allowed_extensions = {'png', 'jpg', 'jpeg'}
+    def allowed_file(filename):
+        return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
+
+    if not allowed_file(photo.filename):
+        return jsonify({'success': False, 'error': 'Invalid file type. Only png, jpg, jpeg allowed.'}), 400
+
+    # Secure the filename
+    filename = secure_filename(photo.filename)
+    # Generate unique filename to avoid collisions
+    unique_filename = f"{uuid.uuid4().hex}_{filename}"
+
+    upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+    if not os.path.exists(upload_folder):
+        os.makedirs(upload_folder)
+
+    file_path = os.path.join(upload_folder, unique_filename)
+    photo.save(file_path)
+
+    # Update user profile photo URL in Supabase
+    user_id = session['user_id']
+    photo_url = url_for('main.uploaded_file', filename=unique_filename)
+
+    success, result = SupabaseManager.update_user_profile(user_id, {'profile_photo_url': photo_url})
+
+    if not success:
+        return jsonify({'success': False, 'error': 'Failed to update profile photo'}), 500
+
+    return jsonify({'success': True, 'photo_url': photo_url})
