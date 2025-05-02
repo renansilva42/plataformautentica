@@ -21,19 +21,156 @@
 
 <h1>Perfil do Usuário</h1>
 
-<div>
+<div class="profile-photo-container">
   <h2>Foto de Perfil</h2>
-  {% if user.profile_photo_url %}
-    <img src="{{ user.profile_photo_url }}" alt="Foto de Perfil" class="profile-photo">
-  {% else %}
-    <i class="fas fa-user-circle profile-photo" aria-hidden="true" title="Ícone de usuário"></i>
-  {% endif %}
-  <form id="upload-photo-form" method="POST" enctype="multipart/form-data" action="{{ url_for('main.upload_profile_photo') }}">
-    <input type="file" name="photo" accept="image/png, image/jpeg" required>
-    <button type="submit">Enviar Foto</button>
-  </form>
-  <div id="upload-result"></div>
+  <div id="photo-wrapper" class="photo-wrapper" tabindex="0" role="button" aria-label="Alterar foto de perfil">
+    {% if user.profile_photo_url %}
+      <img src="{{ user.profile_photo_url }}" alt="Foto de Perfil" id="profile-photo" class="profile-photo interactive-photo">
+    {% else %}
+      <i class="fas fa-user-circle profile-photo interactive-photo" aria-hidden="true" title="Ícone de usuário" id="profile-photo-icon"></i>
+    {% endif %}
+    <div class="photo-overlay">
+      <i class="fas fa-camera camera-icon" aria-hidden="true"></i>
+      <span class="overlay-text">Alterar foto</span>
+    </div>
+  </div>
+  <input type="file" id="photo-input" name="photo" accept="image/png, image/jpeg" style="display:none" aria-label="Selecionar nova foto de perfil">
+  <button id="save-photo-btn" disabled>Salvar Foto de Perfil</button>
+  <div id="upload-progress" class="upload-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="display:none;">
+    <div class="progress-bar"></div>
+  </div>
+  <div id="upload-result" class="upload-result" aria-live="polite"></div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const photoWrapper = document.getElementById('photo-wrapper');
+  const photoInput = document.getElementById('photo-input');
+  const saveBtn = document.getElementById('save-photo-btn');
+  const uploadResult = document.getElementById('upload-result');
+  const uploadProgress = document.getElementById('upload-progress');
+  const progressBar = uploadProgress.querySelector('.progress-bar');
+  const profilePhoto = document.getElementById('profile-photo');
+  const profilePhotoIcon = document.getElementById('profile-photo-icon');
+
+  let selectedFile = null;
+
+  // Click on photo or icon opens file selector
+  photoWrapper.addEventListener('click', () => {
+    photoInput.click();
+  });
+  photoWrapper.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      photoInput.click();
+    }
+  });
+
+  // Validate file and show preview
+  photoInput.addEventListener('change', () => {
+    uploadResult.textContent = '';
+    const file = photoInput.files[0];
+    if (!file) {
+      saveBtn.disabled = true;
+      return;
+    }
+
+    const validTypes = ['image/jpeg', 'image/png'];
+    if (!validTypes.includes(file.type)) {
+      uploadResult.textContent = 'Formato inválido. Use PNG ou JPEG.';
+      saveBtn.disabled = true;
+      return;
+    }
+
+    const maxSizeMB = 15;
+    if (file.size > maxSizeMB * 1024 * 1024) {
+      uploadResult.textContent = `Arquivo muito grande. Máximo ${maxSizeMB}MB.`;
+      saveBtn.disabled = true;
+      return;
+    }
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      if (profilePhoto) {
+        profilePhoto.src = e.target.result;
+      } else if (profilePhotoIcon) {
+        // Replace icon with img element
+        const img = document.createElement('img');
+        img.id = 'profile-photo';
+        img.alt = 'Foto de Perfil';
+        img.className = 'profile-photo interactive-photo';
+        img.src = e.target.result;
+        photoWrapper.replaceChild(img, profilePhotoIcon);
+      }
+    };
+    reader.readAsDataURL(file);
+
+    selectedFile = file;
+    saveBtn.disabled = false;
+  });
+
+  // Handle upload on save button click
+  saveBtn.addEventListener('click', async () => {
+    if (!selectedFile) return;
+
+    saveBtn.disabled = true;
+    uploadProgress.style.display = 'block';
+    uploadResult.textContent = '';
+
+    const formData = new FormData();
+    formData.append('photo', selectedFile);
+
+    try {
+      const response = await fetch('{{ url_for("main.upload_profile_photo") }}', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        uploadResult.textContent = 'Erro ao enviar foto: ' + (errorData.error || 'Erro desconhecido');
+        saveBtn.disabled = false;
+        uploadProgress.style.display = 'none';
+        return;
+      }
+
+      // Simulate progress bar fill (since fetch doesn't provide progress natively)
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 10;
+        if (progress > 100) progress = 100;
+        progressBar.style.width = progress + '%';
+        uploadProgress.setAttribute('aria-valuenow', progress);
+        if (progress === 100) clearInterval(interval);
+      }, 100);
+
+      const result = await response.json();
+
+      uploadResult.textContent = 'Foto enviada com sucesso!';
+      uploadResult.classList.add('success-message');
+      setTimeout(() => {
+        uploadResult.classList.remove('success-message');
+      }, 3000);
+
+      // Update photo src with cache bust
+      if (profilePhoto) {
+        profilePhoto.src = result.photo_url + '?t=' + new Date().getTime();
+      }
+
+      saveBtn.disabled = true;
+      uploadProgress.style.display = 'none';
+      progressBar.style.width = '0%';
+      selectedFile = null;
+      photoInput.value = '';
+    } catch (error) {
+      uploadResult.textContent = 'Erro ao enviar foto: ' + error.message;
+      saveBtn.disabled = false;
+      uploadProgress.style.display = 'none';
+    }
+  });
+});
+</script>
 
 <div class="profile-info">
   <h2>Informações do Perfil</h2>

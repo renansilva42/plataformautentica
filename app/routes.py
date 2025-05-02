@@ -552,9 +552,12 @@ def upload_profile_photo():
     # Delete old profile photo file if exists
     user_id = session['user_id']
     success, user_profile = SupabaseManager.get_user_profile(user_id)
+    old_photo_url = None
+    is_first_upload = True
     if success:
         old_photo_url = user_profile.get('profile_photo_url')
         if old_photo_url:
+            is_first_upload = False
             # Extract filename from URL
             from urllib.parse import urlparse
             parsed_url = urlparse(old_photo_url)
@@ -579,4 +582,9 @@ def upload_profile_photo():
         current_app.logger.error(f"Failed to update profile photo: {result}")
         return jsonify({'success': False, 'error': f'Failed to update profile photo: {result}'}), 500
 
-    return jsonify({'success': True, 'photo_url': photo_url})
+    return jsonify({
+        'success': True,
+        'photo_url': photo_url,
+        'is_first_upload': is_first_upload,
+        'old_photo_url': old_photo_url
+    })
