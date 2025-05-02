@@ -545,7 +545,7 @@ def upload_profile_photo():
     # Generate unique filename to avoid collisions
     unique_filename = f"{uuid.uuid4().hex}_{filename}"
 
-    upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+    upload_folder = current_app.config.get('UPLOAD_FOLDER', 'static/img/profile_photos')
     if not os.path.exists(upload_folder):
         os.makedirs(upload_folder)
 
@@ -554,11 +554,12 @@ def upload_profile_photo():
 
     # Update user profile photo URL in Supabase
     user_id = session['user_id']
-    photo_url = url_for('main.uploaded_file', filename=unique_filename)
+    photo_url = url_for('static', filename=f'img/profile_photos/{unique_filename}')
 
     success, result = SupabaseManager.update_user_profile(user_id, {'profile_photo_url': photo_url})
 
     if not success:
-        return jsonify({'success': False, 'error': 'Failed to update profile photo'}), 500
+        current_app.logger.error(f"Failed to update profile photo: {result}")
+        return jsonify({'success': False, 'error': f'Failed to update profile photo: {result}'}), 500
 
     return jsonify({'success': True, 'photo_url': photo_url})
