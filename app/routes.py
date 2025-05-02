@@ -378,6 +378,10 @@ def capivara_analista_chat():
 
         message = data['message']
         message_type = data.get('type', 'text')  # 'text' or 'image' or 'image_base64'
+        thread_id = data.get('thread_id')
+        if not thread_id:
+            import uuid
+            thread_id = str(uuid.uuid4())
 
         # If image type and message is base64 data URI, extract base64 string and send as 'image_file'
         if message_type == 'image' and isinstance(message, str) and message.startswith('data:image/'):
@@ -426,11 +430,22 @@ def capivara_analista_chat():
     else:
         return jsonify({'success': False, 'error': 'Unsupported content type'}), 400
 
+    # Save user message to DB
+    save_success, save_result = SupabaseManager.insert_message(user_id, thread_id, 'user', message)
+    if not save_success:
+        current_app.logger.error(f"Failed to save user message: {save_result}")
+
     # Call OpenAIManager method to get assistant response
     from .openai_client import OpenAIManager
     try:
         response = OpenAIManager.capivara_analista_chat(message, message_type, user_profile)
-        return jsonify({'success': True, 'response': response})
+
+        # Save AI response to DB
+        save_success, save_result = SupabaseManager.insert_message(user_id, thread_id, 'ai', response)
+        if not save_success:
+            current_app.logger.error(f"Failed to save AI response: {save_result}")
+
+        return jsonify({'success': True, 'response': response, 'thread_id': thread_id})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -497,11 +512,26 @@ def capivara_conteudo_chat():
 
     message = data['message']
     message_type = data.get('type', 'text')  # Only 'text' expected, no images
+    thread_id = data.get('thread_id')
+    if not thread_id:
+        import uuid
+        thread_id = str(uuid.uuid4())
+
+    # Save user message to DB
+    save_success, save_result = SupabaseManager.insert_message(user_id, thread_id, 'user', message)
+    if not save_success:
+        current_app.logger.error(f"Failed to save user message: {save_result}")
 
     from .openai_client import OpenAIManager
     try:
         response = OpenAIManager.capivara_conteudo_chat(message, message_type, user_profile)
-        return jsonify({'success': True, 'response': response})
+
+        # Save AI response to DB
+        save_success, save_result = SupabaseManager.insert_message(user_id, thread_id, 'ai', response)
+        if not save_success:
+            current_app.logger.error(f"Failed to save AI response: {save_result}")
+
+        return jsonify({'success': True, 'response': response, 'thread_id': thread_id})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 

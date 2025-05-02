@@ -122,3 +122,33 @@ class SupabaseManager:
             error_message = str(e)
             print(f"Erro na confirmação de email: {error_message}")
             return False, error_message
+
+    @staticmethod
+    def insert_message(user_id, thread_id, role, content):
+        """Insert a chat message into the messages table"""
+        try:
+            message_data = {
+                "user_id": user_id,
+                "thread_id": thread_id,
+                "role": role,
+                "content": content
+            }
+            response = supabase.table("messages").insert(message_data).execute()
+            if response.status_code == 201 or response.status_code == 200:
+                return True, response.data
+            else:
+                return False, response.data
+        except Exception as e:
+            return False, str(e)
+
+    @staticmethod
+    def get_messages_by_thread(thread_id):
+        """Retrieve all messages for a given thread ordered by creation time"""
+        try:
+            response = supabase.table("messages").select("*").eq("thread_id", thread_id).order("created_at", ascending=True).execute()
+            if response.status_code == 200:
+                return True, response.data
+            else:
+                return False, response.data
+        except Exception as e:
+            return False, str(e)
