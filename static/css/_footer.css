@@ -1,0 +1,7 @@
+.app-footer {
+    padding: 1rem;
+    background-color: var(--primary-blue);
+    color: var(--white);
+    text-align: center;
+    font-size: 0.875rem;
+}
