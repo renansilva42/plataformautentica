@@ -2,13 +2,29 @@
 
 {% block title %}Perfil do Usuário{% endblock %}
 
+{% block custom_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% endblock %}
+
 {% block content %}
+<div class="profile-container">
+<nav aria-label="breadcrumb" class="breadcrumb-nav profile-breadcrumb">
+    <ul class="breadcrumb profile-breadcrumb-list">
+        <li class="breadcrumb-item">
+            <i class="fas fa-home" aria-hidden="true"></i>
+            <a href="{{ url_for('main.home') }}" class="breadcrumb-link">Home</a>
+        </li>
+        <li class="breadcrumb-separator" aria-current="page">></li>
+        <li class="breadcrumb-current">Perfil do Usuário</li>
+    </ul>
+</nav>
+
 <h1>Perfil do Usuário</h1>
 
 <div>
   <h2>Foto de Perfil</h2>
   {% if user.profile_photo_url %}
-    <img src="{{ user.profile_photo_url }}" alt="Foto de Perfil" style="max-width: 200px; max-height: 200px;">
+    <img src="{{ user.profile_photo_url }}" alt="Foto de Perfil" class="profile-photo">
   {% else %}
     <p>Você ainda não enviou uma foto de perfil.</p>
   {% endif %}
@@ -19,7 +35,7 @@
   <div id="upload-result"></div>
 </div>
 
-<div>
+<div class="profile-info">
   <h2>Informações do Perfil</h2>
   <form id="profile-info-form" method="POST" action="#">
     <label for="nome">Nome:</label>
@@ -62,5 +78,6 @@ document.getElementById('upload-photo-form').addEventListener('submit', async fu
   }
 });
 </script>
+</div>
 
 {% endblock %}
