@@ -6,12 +6,16 @@
     background-color: var(--primary-blue);
     color: var(--white);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    flex-wrap: wrap;
 }
 
 .app-header .logo-container {
     margin-bottom: 0;
     flex-direction: row;
     gap: 1rem;
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
 }
 
 .app-header .logo {
@@ -27,6 +31,10 @@
 
 .user-menu {
     position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    justify-content: flex-end;
 }
 
 .user-info {
@@ -86,4 +94,31 @@
 
 .menu-item:hover {
     background-color: var(--light-gray);
+}
+
+/* Update the media query for mobile view */
+@media (max-width: 600px) {
+    .app-header {
+        flex-direction: row;
+        padding: 0.75rem 1rem;
+        align-items: center;
+    }
+    
+    .app-header .logo-container {
+        order: 1; /* Force logo to appear first */
+        flex: 0 0 auto;
+        margin-right: auto; /* Push the user menu to the right */
+    }
+    
+    .user-menu {
+        order: 2; /* Force user menu to appear second */
+        flex: 0 0 auto;
+    }
+    
+    /* Hide username on very small screens to save space */
+    @media (max-width: 400px) {
+        .user-name {
+            display: none;
+        }
+    }
 }

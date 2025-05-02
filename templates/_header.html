@@ -1,29 +1,28 @@
-<header class="app-header">
-    <div class="logo-container">
-        <div class="logo">
-            <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Logo Autêntica">
+<header class="app-header" style="position: relative; z-index: 10;">
+    <div class="logo-container" style="display: flex; align-items: center; gap: 0.5rem;">
+        <div class="logo" style="margin-bottom: 0;">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo Autêntica" style="width: auto; height: 50px;">
         </div>
-        <h1 class="brand-name">AUTÊNTICA</h1>
     </div>
-    <div class="user-menu">
-        <div class="user-info">
+    <div class="user-menu" style="display: flex; align-items: center;">
+        <div class="user-info" style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
             {% if user %}
-                <span class="user-name">{{ user.nome }}</span>
-                <div class="user-avatar">
+                <span class="user-name" style="font-weight: 600;">{{ user.nome }}</span>
+                <div class="user-avatar" style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden;">
                     {% if user.profile_photo_url %}
-                        <img src="{{ user.profile_photo_url }}" alt="Foto de perfil de {{ user.nome }}" class="user-avatar-img" />
+                        <img src="{{ user.profile_photo_url }}" alt="Foto de perfil de {{ user.nome }}" class="user-avatar-img" style="width: 40px; height: 40px; object-fit: cover;" />
                     {% else %}
-                        <i class="fas fa-user-circle"></i>
+                        <i class="fas fa-user-circle" style="font-size: 40px; color: var(--primary-blue);"></i>
                     {% endif %}
                 </div>
             {% else %}
-                <span class="user-name">Visitante</span>
-                <div class="user-avatar">
-                    <i class="fas fa-user-circle"></i>
+                <span class="user-name" style="font-weight: 600;">Visitante</span>
+                <div class="user-avatar" style="width: 40px; height: 40px; display: flex; justify-content: center; align-items: center;">
+                    <i class="fas fa-user-circle" style="font-size: 40px; color: var(--primary-blue);"></i>
                 </div>
             {% endif %}
         </div>
-        <div class="dropdown-menu">
+        <div class="dropdown-menu" style="position: absolute; top: 100%; right: 0;">
             <a href="{{ url_for('main.profile') }}" class="menu-item">
                 <i class="fas fa-user"></i> Meu Perfil
             </a>
