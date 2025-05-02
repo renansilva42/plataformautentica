@@ -431,7 +431,10 @@ def capivara_analista_chat():
         return jsonify({'success': False, 'error': 'Unsupported content type'}), 400
 
     # Save user message to DB
-    save_success, save_result = SupabaseManager.insert_message(user_id, thread_id, 'user', message)
+    save_success, save_result = SupabaseManager.insert_message_analista(
+        user_id, thread_id, 'user', message,
+        user_profile.get('nome'), user_profile.get('instagram'), user_profile.get('telefone')
+    )
     if not save_success:
         current_app.logger.error(f"Failed to save user message: {save_result}")
 
@@ -441,7 +444,10 @@ def capivara_analista_chat():
         response = OpenAIManager.capivara_analista_chat(message, message_type, user_profile)
 
         # Save AI response to DB
-        save_success, save_result = SupabaseManager.insert_message(user_id, thread_id, 'ai', response)
+        save_success, save_result = SupabaseManager.insert_message_analista(
+            user_id, thread_id, 'ai', response,
+            user_profile.get('nome'), user_profile.get('instagram'), user_profile.get('telefone')
+        )
         if not save_success:
             current_app.logger.error(f"Failed to save AI response: {save_result}")
 
@@ -518,7 +524,10 @@ def capivara_conteudo_chat():
         thread_id = str(uuid.uuid4())
 
     # Save user message to DB
-    save_success, save_result = SupabaseManager.insert_message(user_id, thread_id, 'user', message)
+    save_success, save_result = SupabaseManager.insert_message_conteudo(
+        user_id, thread_id, 'user', message,
+        user_profile.get('nome'), user_profile.get('instagram'), user_profile.get('telefone')
+    )
     if not save_success:
         current_app.logger.error(f"Failed to save user message: {save_result}")
 
@@ -527,13 +536,17 @@ def capivara_conteudo_chat():
         response = OpenAIManager.capivara_conteudo_chat(message, message_type, user_profile)
 
         # Save AI response to DB
-        save_success, save_result = SupabaseManager.insert_message(user_id, thread_id, 'ai', response)
+        save_success, save_result = SupabaseManager.insert_message_conteudo(
+            user_id, thread_id, 'ai', response,
+            user_profile.get('nome'), user_profile.get('instagram'), user_profile.get('telefone')
+        )
         if not save_success:
             current_app.logger.error(f"Failed to save AI response: {save_result}")
 
         return jsonify({'success': True, 'response': response, 'thread_id': thread_id})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @main.route('/profile', methods=['GET'])
 def profile():

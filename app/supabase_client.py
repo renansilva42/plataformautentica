@@ -124,16 +124,19 @@ class SupabaseManager:
             return False, error_message
 
     @staticmethod
-    def insert_message(user_id, thread_id, role, content):
-        """Insert a chat message into the messages table"""
+    def insert_message_analista(user_id, thread_id, role, content, nome, instagram, telefone):
+        """Insert a chat message into the messages_analista table"""
         try:
             message_data = {
                 "user_id": user_id,
                 "thread_id": thread_id,
                 "role": role,
-                "content": content
+                "content": content,
+                "nome": nome,
+                "instagram": instagram,
+                "telefone": telefone
             }
-            response = supabase.table("messages").insert(message_data).execute()
+            response = supabase.table("messages_analista").insert(message_data).execute()
             if response.status_code == 201 or response.status_code == 200:
                 return True, response.data
             else:
@@ -142,10 +145,43 @@ class SupabaseManager:
             return False, str(e)
 
     @staticmethod
-    def get_messages_by_thread(thread_id):
-        """Retrieve all messages for a given thread ordered by creation time"""
+    def get_messages_by_thread_analista(thread_id):
+        """Retrieve all messages for a given thread ordered by creation time from messages_analista"""
         try:
-            response = supabase.table("messages").select("*").eq("thread_id", thread_id).order("created_at", ascending=True).execute()
+            response = supabase.table("messages_analista").select("*").eq("thread_id", thread_id).order("created_at", ascending=True).execute()
+            if response.status_code == 200:
+                return True, response.data
+            else:
+                return False, response.data
+        except Exception as e:
+            return False, str(e)
+
+    @staticmethod
+    def insert_message_conteudo(user_id, thread_id, role, content, nome, instagram, telefone):
+        """Insert a chat message into the messages_conteudo table"""
+        try:
+            message_data = {
+                "user_id": user_id,
+                "thread_id": thread_id,
+                "role": role,
+                "content": content,
+                "nome": nome,
+                "instagram": instagram,
+                "telefone": telefone
+            }
+            response = supabase.table("messages_conteudo").insert(message_data).execute()
+            if response.status_code == 201 or response.status_code == 200:
+                return True, response.data
+            else:
+                return False, response.data
+        except Exception as e:
+            return False, str(e)
+
+    @staticmethod
+    def get_messages_by_thread_conteudo(thread_id):
+        """Retrieve all messages for a given thread ordered by creation time from messages_conteudo"""
+        try:
+            response = supabase.table("messages_conteudo").select("*").eq("thread_id", thread_id).order("created_at", ascending=True).execute()
             if response.status_code == 200:
                 return True, response.data
             else:
