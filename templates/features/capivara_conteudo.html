@@ -21,27 +21,6 @@
 {% endblock %}
 {% block content %}
 <div class="home-container">
-    <header class="app-header">
-        <div class="logo-container">
-            <div class="logo">
-                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Logo Autêntica">
-            </div>
-            <h1 class="brand-name">AUTÊNTICA</h1>
-        </div>
-        <div class="user-menu">
-            <div class="user-info">
-                <span class="user-name">{{ user.nome }}</span>
-                <div class="user-avatar">
-                    <i class="fas fa-user-circle"></i>
-                </div>
-            </div>
-            <div class="dropdown-menu">
-                <a href="{{ url_for('main.logout') }}" class="menu-item">
-                    <i class="fas fa-sign-out-alt"></i> Sair
-                </a>
-            </div>
-        </div>
-    </header>
 
     <main class="main-content">
         <nav aria-label="breadcrumb" class="breadcrumb-nav" style="margin-bottom: 1rem;">
