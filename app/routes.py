@@ -549,11 +549,28 @@ def upload_profile_photo():
     if not os.path.exists(upload_folder):
         os.makedirs(upload_folder)
 
+    # Delete old profile photo file if exists
+    user_id = session['user_id']
+    success, user_profile = SupabaseManager.get_user_profile(user_id)
+    if success:
+        old_photo_url = user_profile.get('profile_photo_url')
+        if old_photo_url:
+            # Extract filename from URL
+            from urllib.parse import urlparse
+            parsed_url = urlparse(old_photo_url)
+            old_filename = os.path.basename(parsed_url.path)
+            old_file_path = os.path.join(upload_folder, old_filename)
+            if os.path.exists(old_file_path):
+                try:
+                    os.remove(old_file_path)
+                    current_app.logger.info(f"Deleted old profile photo: {old_file_path}")
+                except Exception as e:
+                    current_app.logger.error(f"Error deleting old profile photo: {e}")
+
     file_path = os.path.join(upload_folder, unique_filename)
     photo.save(file_path)
 
     # Update user profile photo URL in Supabase
-    user_id = session['user_id']
     photo_url = url_for('static', filename=f'img/profile_photos/{unique_filename}')
 
     success, result = SupabaseManager.update_user_profile(user_id, {'profile_photo_url': photo_url})
