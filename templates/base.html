@@ -37,7 +37,9 @@
             {% endif %}
         {% endwith %}
 
-        {% include '_header.html' %}
+        {% if user %}
+            {% include '_header.html' %}
+        {% endif %}
         
         <!-- Main content -->
         {% block content %}{% endblock %}

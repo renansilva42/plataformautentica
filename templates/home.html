@@ -241,6 +241,7 @@
     
     <main class="main-content">
         <!-- Timer de expiração estilizado -->
+        {% if access_expiration %}
         <div class="expiration-container" id="expiration-status">
             <p>
                 <i class="fas fa-clock expiration-icon"></i>
@@ -248,6 +249,7 @@
                 <span id="countdown-timer">carregando...</span>
             </p>
         </div>
+        {% endif %}
         
         <div class="welcome-message">
             <h2>Bem-vindo, {{ user.nome }}!</h2>
@@ -256,6 +258,7 @@
         
         <!-- Buttons Grid Layout -->
         <div class="buttons-grid">
+
             <a href="{{ url_for('main.skill_a') }}" class="feature-button unlocked" id="skill-a" style="display:none;">
                 <img src="{{ url_for('static', filename='img/icons/skill-a.jpeg') }}" alt="Skill A">
                 <div class="button-content">

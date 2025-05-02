@@ -127,8 +127,8 @@ def home():
         flash("Error loading user profile")
         return redirect(url_for('main.login'))
 
-    # Pass access_expiration to template
-    access_expiration = user_profile.get('access_expiration')
+    # Temporarily disable timer by not passing access_expiration
+    access_expiration = None
 
     return render_template('home.html', user=user_profile, access_expiration=access_expiration)
 
@@ -340,22 +340,23 @@ def capivara_analista():
     
     access_expiration_str = user_profile.get('access_expiration')
     current_app.logger.debug(f"Access expiration string: {access_expiration_str}")
-    if access_expiration_str:
-        try:
-            access_expiration = datetime.fromisoformat(access_expiration_str)
-            # Make access_expiration timezone-aware in America/Belem timezone if naive
-            if access_expiration.tzinfo is None:
-                access_expiration = access_expiration.replace(tzinfo=ZoneInfo("America/Belem"))
-            now = datetime.now(ZoneInfo("America/Belem"))
-            current_app.logger.debug(f"Current time: {now}, Access expiration: {access_expiration}")
-            if now > access_expiration:
-                current_app.logger.info("Access expired, redirecting to home")
-                flash("Seu acesso expirou. Redirecionando para a página inicial.")
-                return redirect(url_for('main.home'))
-        except Exception as e:
-            current_app.logger.error(f"Error parsing access_expiration: {e}")
-            # If parsing fails, allow access (or optionally block)
-            pass
+    # Temporarily disable 48h usage limit by skipping expiration check
+    # if access_expiration_str:
+    #     try:
+    #         access_expiration = datetime.fromisoformat(access_expiration_str)
+    #         # Make access_expiration timezone-aware in America/Belem timezone if naive
+    #         if access_expiration.tzinfo is None:
+    #             access_expiration = access_expiration.replace(tzinfo=ZoneInfo("America/Belem"))
+    #         now = datetime.now(ZoneInfo("America/Belem"))
+    #         current_app.logger.debug(f"Current time: {now}, Access expiration: {access_expiration}")
+    #         if now > access_expiration:
+    #             current_app.logger.info("Access expired, redirecting to home")
+    #             flash("Seu acesso expirou. Redirecionando para a página inicial.")
+    #             return redirect(url_for('main.home'))
+    #     except Exception as e:
+    #         current_app.logger.error(f"Error parsing access_expiration: {e}")
+    #         # If parsing fails, allow access (or optionally block)
+    #         pass
     
     return render_template('features/capivara_analista.html', user=user_profile)
 
