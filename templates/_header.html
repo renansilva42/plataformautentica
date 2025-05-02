@@ -9,7 +9,11 @@
         <div class="user-info">
             <span class="user-name">{{ user.nome }}</span>
             <div class="user-avatar">
-                <i class="fas fa-user-circle"></i>
+                {% if user.profile_photo_url %}
+                    <img src="{{ user.profile_photo_url }}" alt="Foto de perfil de {{ user.nome }}" class="user-avatar-img" />
+                {% else %}
+                    <i class="fas fa-user-circle"></i>
+                {% endif %}
             </div>
         </div>
         <div class="dropdown-menu">
