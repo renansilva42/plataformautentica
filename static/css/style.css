@@ -407,3 +407,21 @@ a:hover {
         max-width: 1140px;
     }
 }
+
+/* Mobile adjustment for logo size on index page */
+@media (max-width: 576px) {
+    .landing-container .logo-container {
+        height: 150px !important;
+    }
+
+    .landing-container .logo {
+        height: 100% !important;
+        width: auto !important;
+    }
+
+    .landing-container .logo img {
+        height: 100% !important;
+        width: auto !important;
+        object-fit: contain;
+    }
+}
