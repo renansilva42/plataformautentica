@@ -140,3 +140,20 @@
   color: #343a40;
 }
 
+/* Additional styles for profile photo icon */
+.profile-photo {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.profile-photo.fas {
+    font-size: 200px;
+    color: #083d77;
+    line-height: 1;
+    margin-bottom: 1rem;
+}

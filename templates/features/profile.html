@@ -26,7 +26,7 @@
   {% if user.profile_photo_url %}
     <img src="{{ user.profile_photo_url }}" alt="Foto de Perfil" class="profile-photo">
   {% else %}
-    <p>Você ainda não enviou uma foto de perfil.</p>
+    <i class="fas fa-user-circle profile-photo" aria-hidden="true" title="Ícone de usuário"></i>
   {% endif %}
   <form id="upload-photo-form" method="POST" enctype="multipart/form-data" action="{{ url_for('main.upload_profile_photo') }}">
     <input type="file" name="photo" accept="image/png, image/jpeg" required>
