@@ -16,6 +16,14 @@
     display: flex;
     align-items: center;
     flex: 1 1 auto;
+    height: 80px;
+    width: auto;
+}
+
+.app-header .logo-container img {
+    height: 100%;
+    width: auto;
+    object-fit: contain;
 }
 
 .app-header .logo {
@@ -102,17 +110,43 @@
         flex-direction: row;
         padding: 0.75rem 1rem;
         align-items: center;
+        gap: 1rem;
     }
     
     .app-header .logo-container {
         order: 1; /* Force logo to appear first */
         flex: 0 0 auto;
         margin-right: auto; /* Push the user menu to the right */
+        height: 50px;
+        width: auto;
+    }
+    
+    .app-header .logo-container img {
+        height: 100%;
+        width: auto;
+        object-fit: contain;
     }
     
     .user-menu {
         order: 2; /* Force user menu to appear second */
         flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .user-info {
+        gap: 0.25rem;
+    }
+    
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .user-avatar-img {
+        width: 36px;
+        height: 36px;
     }
     
     /* Hide username on very small screens to save space */
@@ -121,4 +155,11 @@
             display: none;
         }
     }
+}
+
+.user-arrow {
+    color: var(--white);
+    font-size: 0.75rem;
+    margin-left: 0.25rem;
+    align-self: center;
 }
