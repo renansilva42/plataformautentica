@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const uploadResult = document.getElementById('upload-result');
   const uploadProgress = document.getElementById('upload-progress');
   const progressBar = uploadProgress.querySelector('.progress-bar');
-  const profilePhoto = document.getElementById('profile-photo');
+  let profilePhoto = document.getElementById('profile-photo');
   const profilePhotoIcon = document.getElementById('profile-photo-icon');
 
   let selectedFile = null;
@@ -102,6 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
         img.className = 'profile-photo interactive-photo';
         img.src = e.target.result;
         photoWrapper.replaceChild(img, profilePhotoIcon);
+        profilePhoto = img; // Update reference
       }
     };
     reader.readAsDataURL(file);
