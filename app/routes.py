@@ -616,7 +616,12 @@ def upload_profile_photo():
                     current_app.logger.error(f"Error deleting old profile photo: {e}")
 
     file_path = os.path.join(upload_folder, unique_filename)
-    photo.save(file_path)
+    try:
+        photo.save(file_path)
+        current_app.logger.info(f"Saved new profile photo: {file_path}")
+    except Exception as e:
+        current_app.logger.error(f"Error saving new profile photo: {e}")
+        return jsonify({'success': False, 'error': f'Error saving photo: {e}'}), 500
 
     # Update user profile photo URL in Supabase
     photo_url = url_for('static', filename=f'img/profile_photos/{unique_filename}')
@@ -625,6 +630,13 @@ def upload_profile_photo():
 
     if not success:
         current_app.logger.error(f"Failed to update profile photo: {result}")
+        # Attempt to remove the newly saved photo to avoid orphan files
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                current_app.logger.info(f"Removed new profile photo due to DB update failure: {file_path}")
+        except Exception as e:
+            current_app.logger.error(f"Error removing new profile photo after DB failure: {e}")
         return jsonify({'success': False, 'error': f'Failed to update profile photo: {result}'}), 500
 
     return jsonify({
