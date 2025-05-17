@@ -203,6 +203,23 @@ def capivara_editorial():
     
     return render_template('features/capivara_editorial.html', user=user_profile)
 
+@main.route('/capivara-tracao')
+def capivara_tracao():
+    """Render the Capivara Tração feature page"""
+    if 'token' not in session or 'user_id' not in session:
+        flash("Please log in to access this page")
+        return redirect(url_for('main.login'))
+    
+    # Get user profile
+    user_id = session['user_id']
+    success, user_profile = SupabaseManager.get_user_profile(user_id)
+    
+    if not success:
+        flash("Error loading user profile")
+        return redirect(url_for('main.login'))
+    
+    return render_template('features/capivara_tracao.html', user=user_profile)
+
 @main.route('/skill-a')
 def skill_a():
     """Render the Skill A (Instagram Analysis) feature page"""

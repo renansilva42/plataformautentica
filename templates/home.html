@@ -273,16 +273,6 @@
                 </div>
             </a>
             
-            <!-- Locked Capivara Editorial Button -->
-            <div class="feature-button locked" id="capivara-editorial" style="display:none;">
-                <img src="{{ url_for('static', filename='img/icons/capivara-editorial.jpeg') }}" alt="Capivara Editorial">
-                <div class="lock-overlay">
-                    <i class="fas fa-lock lock-icon"></i>
-                </div>
-                <div class="button-content">
-                    <span class="button-name">Capivara Editorial</span>
-                </div>
-            </div>
 
             <a href="{{ url_for('main.capivara_conteudo') }}" class="feature-button unlocked" id="capivara-conteudo">
                 <img src="{{ url_for('static', filename='img/icons/capivara-conteudo.jpeg') }}" alt="Capivara do Conteúdo">
@@ -291,16 +281,21 @@
                 </div>
             </a>
 
-            <!-- Locked Buttons -->
-            <div class="feature-button locked" style="display:none;">
+            <!-- Unlocked Capivara Tração Button -->
+            <a href="{{ url_for('main.capivara_tracao') }}" class="feature-button unlocked" id="capivara-tracao">
                 <img src="{{ url_for('static', filename='img/icons/capivara-tracao.jpeg') }}" alt="Capivara Tração">
-                <div class="lock-overlay">
-                    <i class="fas fa-lock lock-icon"></i>
-                </div>
                 <div class="button-content">
                     <span class="button-name">Capivara Tração</span>
                 </div>
-            </div>
+            </a>
+
+             <!-- Unlocked Capivara Editorial Button -->
+            <a href="{{ url_for('main.capivara_editorial') }}" class="feature-button unlocked" id="capivara-editorial" >
+                <img src="{{ url_for('static', filename='img/icons/capivara-editorial.jpeg') }}" alt="Capivara Editorial">
+                <div class="button-content">
+                    <span class="button-name">Capivara Editorial</span>
+                </div>
+            </a>
             
             <div class="feature-button locked" style="display:none;">
                 <img src="{{ url_for('static', filename='img/icons/capivara-brechas.jpeg') }}" alt="Capivara das Brechas">
