@@ -624,7 +624,7 @@ def upload_profile_photo():
         return jsonify({'success': False, 'error': f'Error saving photo: {e}'}), 500
 
     # Update user profile photo URL in Supabase
-    photo_url = url_for('static', filename=f'img/profile_photos/{unique_filename}')
+    photo_url = url_for('main.uploaded_file', filename=unique_filename)
 
     success, result = SupabaseManager.update_user_profile(user_id, {'profile_photo_url': photo_url})
 
