@@ -26,8 +26,9 @@ class OpenAIManager:
             
             response = requests.get(get_assistant_url, headers=headers, timeout=30)
             return response.status_code == 200
-        except:
+        except Exception:
             return False
+
             
     @staticmethod
     def capivara_analista_chat(message, message_type, user_profile):
@@ -198,6 +199,11 @@ class OpenAIManager:
                 text = re.sub(r'`{1,3}.*?`{1,3}', '', text)      # inline code
                 text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)  # links
                 text = re.sub(r'[{}#]', '', text)                 # remove braces and hashes
+                # Remove unwanted characters and patterns
+                text = re.sub(r"'type':\s*'text',\s*'text':\s*'value':\s*'", '', text)
+                text = re.sub(r"',\s*'annotations':\s*\[\]", '', text)
+                text = re.sub(r"\\n", "\n", text)                 # Convert escaped newlines to actual newlines
+                text = re.sub(r"\s+", " ", text)                   # Collapse multiple spaces
                 return text.strip()
 
             for part in content_parts:
@@ -207,7 +213,7 @@ class OpenAIManager:
                         assistant_response += clean_text(text_part)
                     elif isinstance(text_part, dict):
                         # Extract 'value' key if present, else convert to string
-                        value_text = text_part.get('value') if 'value' in text_part else str(text_part)
+                        value_text = part.get('value') if 'value' in part else str(part)
                         assistant_response += clean_text(value_text)
                     else:
                         assistant_response += clean_text(str(text_part))
@@ -351,6 +357,11 @@ class OpenAIManager:
                 text = re.sub(r'`{1,3}.*?`{1,3}', '', text)      # inline code
                 text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)  # links
                 text = re.sub(r'[{}#]', '', text)                 # remove braces and hashes
+                # Remove unwanted characters and patterns
+                text = re.sub(r"'type':\s*'text',\s*'text':\s*'value':\s*'", '', text)
+                text = re.sub(r"',\s*'annotations':\s*\[\]", '', text)
+                text = re.sub(r"\\n", "\n", text)                 # Convert escaped newlines to actual newlines
+                text = re.sub(r"\s+", " ", text)                   # Collapse multiple spaces
                 return text.strip()
 
             for part in content_parts:
@@ -360,7 +371,7 @@ class OpenAIManager:
                         assistant_response += clean_text(text_part)
                     elif isinstance(text_part, dict):
                         # Extract 'value' key if present, else convert to string
-                        value_text = text_part.get('value') if 'value' in text_part else str(text_part)
+                        value_text = part.get('value') if 'value' in part else str(part)
                         assistant_response += clean_text(value_text)
                     else:
                         assistant_response += clean_text(str(text_part))
@@ -372,4 +383,473 @@ class OpenAIManager:
 
         except Exception as e:
             current_app.logger.error(f"Erro na comunicação com a API Capivara do Conteúdo: {str(e)}")
+            raise e
+
+    @staticmethod
+    def will_ai_chat(message, message_type, user_profile):
+        """
+        Envia uma mensagem para o assistente Will AI usando a API OpenAI Assistants API
+
+        Args:
+            message (str): Mensagem do usuário (texto)
+            message_type (str): 'text' (não suporta imagens)
+            user_profile (dict): Perfil do usuário (pode ser usado para contexto)
+
+        Returns:
+            str: Resposta do assistente
+        """
+        import requests
+        import time
+        from flask import current_app
+        try:
+            api_key = os.getenv('OPENAI_API_KEY_WII_AI') or current_app.config.get('OPENAI_API_KEY_WII_AI')
+            assistant_id = os.getenv('OPENAI_WILL_AI_ASSISTANT_ID')
+
+            if not api_key:
+                raise Exception("API key para Will AI não configurada")
+            if not assistant_id:
+                raise Exception("OPENAI_WILL_AI_ASSISTANT_ID não configurado na variável de ambiente")
+
+            current_app.logger.info(f"Usando assistant ID Will AI: {assistant_id}")
+
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}",
+                "OpenAI-Beta": "assistants=v2"
+            }
+
+            base_url = "https://api.openai.com/v1"
+
+            # Step 1: Create a thread
+            create_thread_url = f"{base_url}/threads"
+            thread_response = requests.post(create_thread_url, headers=headers, json={}, timeout=30)
+            if thread_response.status_code not in (200, 201):
+                raise Exception(f"Erro ao criar thread: {thread_response.status_code} - {thread_response.text}")
+            thread_data = thread_response.json()
+            thread_id = thread_data.get('id')
+            if not thread_id:
+                raise Exception("ID da thread não retornado")
+
+            message_content = []
+
+            if message_type == 'text':
+                message_content.append({
+                    "type": "text",
+                    "text": message
+                })
+            else:
+                raise Exception("Tipo de mensagem inválido para Will AI. Use apenas 'text'.")
+
+            # Step 2: Add message to the thread
+            add_message_url = f"{base_url}/threads/{thread_id}/messages"
+
+            message_payload = {
+                "role": "user",
+                "content": message_content
+            }
+
+            message_response = requests.post(add_message_url, headers=headers, json=message_payload, timeout=30)
+            if message_response.status_code not in (200, 201):
+                raise Exception(f"Erro ao adicionar mensagem: {message_response.status_code} - {message_response.text}")
+
+            # Step 3: Create a run to get assistant response
+            create_run_url = f"{base_url}/threads/{thread_id}/runs"
+            run_payload = {
+                "assistant_id": assistant_id,
+            }
+            current_app.logger.info(f"Criando run para thread {thread_id} com assistant {assistant_id}")
+            run_response = requests.post(create_run_url, headers=headers, json=run_payload, timeout=60)
+            if run_response.status_code not in (200, 201):
+                raise Exception(f"Erro ao criar run: {run_response.status_code} - {run_response.text}")
+            run_data = run_response.json()
+            run_id = run_data.get('id')
+
+            # Step 4: Wait for the run to complete
+            max_retries = 60
+            retries = 0
+            while retries < max_retries:
+                check_run_url = f"{base_url}/threads/{thread_id}/runs/{run_id}"
+                run_status_response = requests.get(check_run_url, headers=headers, timeout=30)
+                if run_status_response.status_code != 200:
+                    raise Exception(f"Erro ao verificar status do run: {run_status_response.status_code} - {run_status_response.text}")
+
+                run_status_data = run_status_response.json()
+                status = run_status_data.get('status')
+
+                if status == 'completed':
+                    break
+                elif status in ['failed', 'cancelled', 'expired']:
+                    raise Exception(f"Run terminou com status: {status}")
+
+                time.sleep(5)
+                retries += 1
+
+            if retries >= max_retries:
+                raise Exception("Tempo limite excedido aguardando a resposta do assistente")
+
+            # Step 5: Retrieve messages after run completion
+            list_messages_url = f"{base_url}/threads/{thread_id}/messages"
+            messages_response = requests.get(list_messages_url, headers=headers, timeout=30)
+            if messages_response.status_code != 200:
+                raise Exception(f"Erro ao listar mensagens: {messages_response.status_code} - {messages_response.text}")
+
+            messages_data = messages_response.json()
+            messages = messages_data.get('data', [])
+
+            assistant_messages = [msg for msg in messages if msg.get('role') == 'assistant']
+            if not assistant_messages:
+                raise Exception("Nenhuma resposta do assistente encontrada")
+
+            latest_assistant_message = assistant_messages[0]
+
+            content_parts = latest_assistant_message.get('content', [])
+            assistant_response = ""
+
+            import re
+
+            def clean_text(text):
+                # Remove markdown characters like **, ##, etc.
+                text = re.sub(r'(\*\*|__)(.*?)\1', r'\2', text)  # bold
+                text = re.sub(r'(\*|_)(.*?)\1', r'\2', text)      # italic
+                text = re.sub(r'#+ ', '', text)                   # headers
+                text = re.sub(r'`{1,3}.*?`{1,3}', '', text)      # inline code
+                text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)  # links
+                text = re.sub(r'[{}#]', '', text)                 # remove braces and hashes
+                # Remove unwanted characters and patterns
+                text = re.sub(r"'type':\s*'text',\s*'text':\s*'value':\s*'", '', text)
+                text = re.sub(r"',\s*'annotations':\s*\[\]", '', text)
+                text = re.sub(r"\\n", "\n", text)                 # Convert escaped newlines to actual newlines
+                text = re.sub(r"\s+", " ", text)                   # Collapse multiple spaces
+                return text.strip()
+
+            for part in content_parts:
+                if part.get('type') == 'text':
+                    text_part = part.get('text', '')
+                    if isinstance(text_part, str):
+                        assistant_response += clean_text(text_part)
+                    elif isinstance(text_part, dict):
+                        # Extract 'value' key if present, else convert to string
+                        value_text = part.get('value') if 'value' in part else str(part)
+                        assistant_response += clean_text(value_text)
+                    else:
+                        assistant_response += clean_text(str(text_part))
+
+            if not assistant_response:
+                raise Exception("Conteúdo da resposta do assistente vazio")
+
+            return assistant_response
+
+        except Exception as e:
+            current_app.logger.error(f"Erro na comunicação com a API Will AI: {str(e)}")
+            raise e
+
+
+    @staticmethod
+    def capivara_conteudo_chat(message, message_type, user_profile):
+        """
+        Envia uma mensagem para o assistente Capivara do Conteúdo usando a API OpenAI Assistants API
+
+        Args:
+            message (str): Mensagem do usuário (texto)
+            message_type (str): 'text' (não suporta imagens)
+            user_profile (dict): Perfil do usuário (pode ser usado para contexto)
+
+        Returns:
+            str: Resposta do assistente
+        """
+        import requests
+        import time
+        from flask import current_app
+        try:
+            api_key = os.getenv('OPENAI_API_KEY_CONTEUDO') or current_app.config.get('OPENAI_API_KEY_CONTEUDO')
+            assistant_id = os.getenv('OPENAI_CAPIVARA_ANALISTA_CONTEUDO_ID')
+
+            if not api_key:
+                raise Exception("API key para Capivara do Conteúdo não configurada")
+            if not assistant_id:
+                raise Exception("OPENAI_CAPIVARA_ANALISTA_CONTEUDO_ID não configurado na variável de ambiente")
+
+            current_app.logger.info(f"Usando assistant ID Capivara do Conteúdo: {assistant_id}")
+
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}",
+                "OpenAI-Beta": "assistants=v2"
+            }
+
+            base_url = "https://api.openai.com/v1"
+
+            # Step 1: Create a thread
+            create_thread_url = f"{base_url}/threads"
+            thread_response = requests.post(create_thread_url, headers=headers, json={}, timeout=30)
+            if thread_response.status_code not in (200, 201):
+                raise Exception(f"Erro ao criar thread: {thread_response.status_code} - {thread_response.text}")
+            thread_data = thread_response.json()
+            thread_id = thread_data.get('id')
+            if not thread_id:
+                raise Exception("ID da thread não retornado")
+
+            message_content = []
+
+            if message_type == 'text':
+                message_content.append({
+                    "type": "text",
+                    "text": message
+                })
+            else:
+                raise Exception("Tipo de mensagem inválido para Capivara do Conteúdo. Use apenas 'text'.")
+
+            # Step 2: Add message to the thread
+            add_message_url = f"{base_url}/threads/{thread_id}/messages"
+
+            message_payload = {
+                "role": "user",
+                "content": message_content
+            }
+
+            message_response = requests.post(add_message_url, headers=headers, json=message_payload, timeout=30)
+            if message_response.status_code not in (200, 201):
+                raise Exception(f"Erro ao adicionar mensagem: {message_response.status_code} - {message_response.text}")
+
+            # Step 3: Create a run to get assistant response
+            create_run_url = f"{base_url}/threads/{thread_id}/runs"
+            run_payload = {
+                "assistant_id": assistant_id,
+            }
+            current_app.logger.info(f"Criando run para thread {thread_id} com assistant {assistant_id}")
+            run_response = requests.post(create_run_url, headers=headers, json=run_payload, timeout=60)
+            if run_response.status_code not in (200, 201):
+                raise Exception(f"Erro ao criar run: {run_response.status_code} - {run_response.text}")
+            run_data = run_response.json()
+            run_id = run_data.get('id')
+
+            # Step 4: Wait for the run to complete
+            max_retries = 60
+            retries = 0
+            while retries < max_retries:
+                check_run_url = f"{base_url}/threads/{thread_id}/runs/{run_id}"
+                run_status_response = requests.get(check_run_url, headers=headers, timeout=30)
+                if run_status_response.status_code != 200:
+                    raise Exception(f"Erro ao verificar status do run: {run_status_response.status_code} - {run_status_response.text}")
+
+                run_status_data = run_status_response.json()
+                status = run_status_data.get('status')
+
+                if status == 'completed':
+                    break
+                elif status in ['failed', 'cancelled', 'expired']:
+                    raise Exception(f"Run terminou com status: {status}")
+
+                time.sleep(5)
+                retries += 1
+
+            if retries >= max_retries:
+                raise Exception("Tempo limite excedido aguardando a resposta do assistente")
+
+            # Step 5: Retrieve messages after run completion
+            list_messages_url = f"{base_url}/threads/{thread_id}/messages"
+            messages_response = requests.get(list_messages_url, headers=headers, timeout=30)
+            if messages_response.status_code != 200:
+                raise Exception(f"Erro ao listar mensagens: {messages_response.status_code} - {messages_response.text}")
+
+            messages_data = messages_response.json()
+            messages = messages_data.get('data', [])
+
+            assistant_messages = [msg for msg in messages if msg.get('role') == 'assistant']
+            if not assistant_messages:
+                raise Exception("Nenhuma resposta do assistente encontrada")
+
+            latest_assistant_message = assistant_messages[0]
+
+            content_parts = latest_assistant_message.get('content', [])
+            assistant_response = ""
+
+            import re
+
+            def clean_text(text):
+                # Remove markdown characters like **, ##, etc.
+                text = re.sub(r'(\*\*|__)(.*?)\1', r'\2', text)  # bold
+                text = re.sub(r'(\*|_)(.*?)\1', r'\2', text)      # italic
+                text = re.sub(r'#+ ', '', text)                   # headers
+                text = re.sub(r'`{1,3}.*?`{1,3}', '', text)      # inline code
+                text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)  # links
+                text = re.sub(r'[{}#]', '', text)                 # remove braces and hashes
+                # Remove unwanted characters and patterns
+                text = re.sub(r"'type':\s*'text',\s*'text':\s*'value':\s*'", '', text)
+                text = re.sub(r"',\s*'annotations':\s*\[\]", '', text)
+                text = re.sub(r"\\n", "\n", text)                 # Convert escaped newlines to actual newlines
+                text = re.sub(r"\s+", " ", text)                   # Collapse multiple spaces
+                return text.strip()
+
+            for part in content_parts:
+                if part.get('type') == 'text':
+                    text_part = part.get('text', '')
+                    if isinstance(text_part, str):
+                        assistant_response += clean_text(text_part)
+                    elif isinstance(text_part, dict):
+                        # Extract 'value' key if present, else convert to string
+                        value_text = part.get('value') if 'value' in part else str(part)
+                        assistant_response += clean_text(value_text)
+                    else:
+                        assistant_response += clean_text(str(text_part))
+
+            if not assistant_response:
+                raise Exception("Conteúdo da resposta do assistente vazio")
+
+            return assistant_response
+
+        except Exception as e:
+            current_app.logger.error(f"Erro na comunicação com a API Capivara do Conteúdo: {str(e)}")
+            raise e
+    @staticmethod
+    def will_ai_chat(message, message_type, user_profile):
+        """
+        Envia uma mensagem para o assistente Will AI usando a API OpenAI Assistants API
+
+        Args:
+            message (str): Mensagem do usuário (texto)
+            message_type (str): 'text' (não suporta imagens)
+            user_profile (dict): Perfil do usuário (pode ser usado para contexto)
+
+        Returns:
+            str: Resposta do assistente
+        """
+        import requests
+        import time
+        from flask import current_app
+        try:
+            api_key = os.getenv('OPENAI_API_KEY_WII_AI') or current_app.config.get('OPENAI_API_KEY_WII_AI')
+            assistant_id = os.getenv('OPENAI_WILL_AI_ASSISTANT_ID')
+
+            if not api_key:
+                raise Exception("API key para Will AI não configurada")
+            if not assistant_id:
+                raise Exception("OPENAI_WILL_AI_ASSISTANT_ID não configurado na variável de ambiente")
+
+            current_app.logger.info(f"Usando assistant ID Will AI: {assistant_id}")
+
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}",
+                "OpenAI-Beta": "assistants=v2"
+            }
+
+            base_url = "https://api.openai.com/v1"
+
+            # Step 1: Create a thread
+            create_thread_url = f"{base_url}/threads"
+            thread_response = requests.post(create_thread_url, headers=headers, json={}, timeout=30)
+            if thread_response.status_code not in (200, 201):
+                raise Exception(f"Erro ao criar thread: {thread_response.status_code} - {thread_response.text}")
+            thread_data = thread_response.json()
+            thread_id = thread_data.get('id')
+            if not thread_id:
+                raise Exception("ID da thread não retornado")
+
+            message_content = []
+
+            if message_type == 'text':
+                message_content.append({
+                    "type": "text",
+                    "text": message
+                })
+            else:
+                raise Exception("Tipo de mensagem inválido para Will AI. Use apenas 'text'.")
+
+            # Step 2: Add message to the thread
+            add_message_url = f"{base_url}/threads/{thread_id}/messages"
+
+            message_payload = {
+                "role": "user",
+                "content": message_content
+            }
+
+            message_response = requests.post(add_message_url, headers=headers, json=message_payload, timeout=30)
+            if message_response.status_code not in (200, 201):
+                raise Exception(f"Erro ao adicionar mensagem: {message_response.status_code} - {message_response.text}")
+
+            # Step 3: Create a run to get assistant response
+            create_run_url = f"{base_url}/threads/{thread_id}/runs"
+            run_payload = {
+                "assistant_id": assistant_id,
+            }
+            current_app.logger.info(f"Criando run para thread {thread_id} com assistant {assistant_id}")
+            run_response = requests.post(create_run_url, headers=headers, json=run_payload, timeout=60)
+            if run_response.status_code not in (200, 201):
+                raise Exception(f"Erro ao criar run: {run_response.status_code} - {run_response.text}")
+            run_data = run_response.json()
+            run_id = run_data.get('id')
+
+            # Step 4: Wait for the run to complete
+            max_retries = 60
+            retries = 0
+            while retries < max_retries:
+                check_run_url = f"{base_url}/threads/{thread_id}/runs/{run_id}"
+                run_status_response = requests.get(check_run_url, headers=headers, timeout=30)
+                if run_status_response.status_code != 200:
+                    raise Exception(f"Erro ao verificar status do run: {run_status_response.status_code} - {run_status_response.text}")
+
+                run_status_data = run_status_response.json()
+                status = run_status_data.get('status')
+
+                if status == 'completed':
+                    break
+                elif status in ['failed', 'cancelled', 'expired']:
+                    raise Exception(f"Run terminou com status: {status}")
+
+                time.sleep(5)
+                retries += 1
+
+            if retries >= max_retries:
+                raise Exception("Tempo limite excedido aguardando a resposta do assistente")
+
+            # Step 5: Retrieve messages after run completion
+            list_messages_url = f"{base_url}/threads/{thread_id}/messages"
+            messages_response = requests.get(list_messages_url, headers=headers, timeout=30)
+            if messages_response.status_code != 200:
+                raise Exception(f"Erro ao listar mensagens: {messages_response.status_code} - {messages_response.text}")
+
+            messages_data = messages_response.json()
+            messages = messages_data.get('data', [])
+
+            assistant_messages = [msg for msg in messages if msg.get('role') == 'assistant']
+            if not assistant_messages:
+                raise Exception("Nenhuma resposta do assistente encontrada")
+
+            latest_assistant_message = assistant_messages[0]
+
+            content_parts = latest_assistant_message.get('content', [])
+            assistant_response = ""
+
+            import re
+
+            def clean_text(text):
+                # Remove markdown characters like **, ##, etc.
+                text = re.sub(r'(\*\*|__)(.*?)\1', r'\2', text)  # bold
+                text = re.sub(r'(\*|_)(.*?)\1', r'\2', text)      # italic
+                text = re.sub(r'#+ ', '', text)                   # headers
+                text = re.sub(r'`{1,3}.*?`{1,3}', '', text)      # inline code
+                text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)  # links
+                text = re.sub(r'[{}#]', '', text)                 # remove braces and hashes
+                return text.strip()
+
+            for part in content_parts:
+                if part.get('type') == 'text':
+                    text_part = part.get('text', '')
+                    if isinstance(text_part, str):
+                        assistant_response += clean_text(text_part)
+                    elif isinstance(text_part, dict):
+                        # Extract 'value' key if present, else convert to string
+                        value_text = part.get('value') if 'value' in part else str(part)
+                        assistant_response += clean_text(value_text)
+                    else:
+                        assistant_response += clean_text(str(text_part))
+
+            if not assistant_response:
+                raise Exception("Conteúdo da resposta do assistente vazio")
+
+            return assistant_response
+
+        except Exception as e:
+            current_app.logger.error(f"Erro na comunicação com a API Will AI: {str(e)}")
             raise e

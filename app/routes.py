@@ -220,6 +220,72 @@ def capivara_tracao():
     
     return render_template('features/capivara_tracao.html', user=user_profile)
 
+@main.route('/will-ai')
+def will_ai():
+    """Render the Will AI feature page"""
+    if 'token' not in session or 'user_id' not in session:
+        flash("Please log in to access this page")
+        return redirect(url_for('main.login'))
+    
+    # Get user profile
+    user_id = session['user_id']
+    success, user_profile = SupabaseManager.get_user_profile(user_id)
+    
+    if not success:
+        flash("Error loading user profile")
+        return redirect(url_for('main.login'))
+    
+    return render_template('features/will_ai.html', user=user_profile)
+
+@main.route('/will-ai/chat', methods=['POST'])
+def will_ai_chat():
+    """Handle chat messages for Will AI"""
+    if 'token' not in session or 'user_id' not in session:
+        return jsonify({'success': False, 'error': 'Authentication required'}), 401
+
+    user_id = session['user_id']
+    success, user_profile = SupabaseManager.get_user_profile(user_id)
+    if not success:
+        return jsonify({'success': False, 'error': 'User profile not found'}), 404
+
+    if not request.is_json:
+        return jsonify({'success': False, 'error': 'Invalid request format'}), 400
+
+    data = request.get_json()
+    if not data or 'message' not in data:
+        return jsonify({'success': False, 'error': 'No message provided'}), 400
+
+    message = data['message']
+    message_type = data.get('type', 'text')  # Only 'text' expected, no images
+    thread_id = data.get('thread_id')
+    if not thread_id:
+        import uuid
+        thread_id = str(uuid.uuid4())
+
+    # Save user message to DB
+    save_success, save_result = SupabaseManager.insert_message_will_ai(
+        user_id, thread_id, 'user', message,
+        user_profile.get('nome'), user_profile.get('instagram'), user_profile.get('telefone')
+    )
+    if not save_success:
+        current_app.logger.error(f"Failed to save user message: {save_result}")
+
+    from .openai_client import OpenAIManager
+    try:
+        response = OpenAIManager.will_ai_chat(message, message_type, user_profile)
+
+        # Save AI response to DB
+        save_success, save_result = SupabaseManager.insert_message_will_ai(
+            user_id, thread_id, 'ai', response,
+            user_profile.get('nome'), user_profile.get('instagram'), user_profile.get('telefone')
+        )
+        if not save_success:
+            current_app.logger.error(f"Failed to save AI response: {save_result}")
+
+        return jsonify({'success': True, 'response': response, 'thread_id': thread_id})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @main.route('/skill-a')
 def skill_a():
     """Render the Skill A (Instagram Analysis) feature page"""

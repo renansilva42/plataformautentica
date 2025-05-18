@@ -208,6 +208,28 @@ class SupabaseManager:
             return False, str(e)
 
     @staticmethod
+    def insert_message_will_ai(user_id, thread_id, role, content, nome, instagram, telefone):
+        """Insert a chat message into the messages_will_ai table"""
+        try:
+            message_data = {
+                "user_id": user_id,
+                "thread_id": thread_id,
+                "role": role,
+                "content": content,
+                "nome": nome,
+                "instagram": instagram,
+                "telefone": telefone
+            }
+            response = supabase.table("messages_will_ai").insert(message_data).execute()
+            if response.status_code == 201 or response.status_code == 200:
+                return True, response.data
+            else:
+                return False, response.data
+        except Exception as e:
+            logger.error(f"Insert message will_ai error: {str(e)}", exc_info=True)
+            return False, str(e)
+
+    @staticmethod
     def get_messages_by_thread_conteudo(thread_id):
         """Retrieve all messages for a given thread ordered by creation time from messages_conteudo"""
         try:
