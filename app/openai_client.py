@@ -831,6 +831,11 @@ class OpenAIManager:
                 text = re.sub(r'`{1,3}.*?`{1,3}', '', text)      # inline code
                 text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)  # links
                 text = re.sub(r'[{}#]', '', text)                 # remove braces and hashes
+                # Remove unwanted characters and patterns
+                text = re.sub(r"'type':\s*'text',\s*'text':\s*'value':\s*'", '', text)
+                text = re.sub(r"',\s*'annotations':\s*\[\]", '', text)
+                text = re.sub(r"\\n", "\n", text)                 # Convert escaped newlines to actual newlines
+                text = re.sub(r"\s+", " ", text)                   # Collapse multiple spaces
                 return text.strip()
 
             for part in content_parts:
