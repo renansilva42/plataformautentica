@@ -3,188 +3,280 @@
 {% block title %}Will AI{% endblock %}
 
 {% block custom_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/capivara_analista.css') }}?v=1.0.1">
-<style>
-.breadcrumb-nav {
-    border-bottom: 1px solid #dee2e6;
-    padding-bottom: 0.5rem;
-    margin-bottom: 1rem !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-.breadcrumb a:hover {
-    color: #0056b3 !important;
-    text-decoration: underline !important;
-    cursor: pointer;
-}
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/chat_styles.css') }}">
+{# Remove will_ai.css to avoid style conflicts #}
 {% endblock %}
 
 {% block content %}
-<div class="home-container">
-
-    <main class="main-content">
-        <nav aria-label="breadcrumb" class="breadcrumb-nav" style="margin-bottom: 1rem;">
-            <ul class="breadcrumb" style="list-style: none; padding: 0; margin: 0; display: flex; align-items: center; font-size: 0.9rem;">
-                <li style="display: flex; align-items: center;">
-                    <i class="fas fa-home" aria-hidden="true" style="margin-right: 0.25rem; color: #007bff;"></i>
-                    <a href="{{ url_for('main.home') }}" style="color: #007bff; text-decoration: underline; margin-right: 0.5rem;">Home</a>
-                </li>
-                <li aria-current="page" style="color: #6c757d; margin-right: 0.5rem;">></li>
-                <li style="font-weight: 600; color: #343a40;">Will AI</li>
-            </ul>
-        </nav>
-        <div class="chat-container" aria-label="Chat Will AI">
-            <div class="chat-header" aria-label="Cabeçalho do chat">
-                Will AI
+<div class="chat-container" role="main" aria-label="Chat Will AI">
+    <header class="chat-header">
+        <div class="header-left">
+            <div class="ai-avatar" aria-hidden="true">
+                <i class="fas fa-hippo"></i>
             </div>
-            <div class="messages" id="messages" role="log" aria-live="polite" aria-relevant="additions"></div>
-            <form id="chat-form" class="input-area" aria-label="Enviar mensagem">
-                <textarea id="message-input" placeholder="Digite sua mensagem..." rows="1" aria-label="Mensagem"></textarea>
-                <button type="submit" aria-label="Enviar mensagem"><i class="fas fa-paper-plane"></i></button>
-            </form>
+            <div class="header-info">
+                <h1>Will AI</h1>
+                <div class="status" aria-live="polite" aria-atomic="true">
+                    <div class="status-dot"></div>
+                    <span>Online</span>
+                </div>
+            </div>
+        </div>
+        <div class="user-menu">
+            <div class="user-info">Logado como {{ user.email }}</div>
+            <a href="{{ url_for('main.logout') }}" class="logout-btn" aria-label="Sign Out">
+                <i class="fas fa-sign-out-alt"></i>
+                Sair
+            </a>
+        </div>
+    </header>
+
+    <main class="messages-container" aria-live="polite" aria-relevant="additions">
+        <div class="empty-state" role="region" aria-label="Empty chat state">
+            <div class="empty-state-icon" aria-hidden="true">
+                <i class="fas fa-comments"></i>
+            </div>
+            <h3>Start a conversation</h3>
+            <p>Ask me anything! I'm here to help with questions, creative tasks, analysis, and more.</p>
+            <div class="suggestions" role="list">
+                <div class="suggestion" role="listitem" tabindex="0" onclick="sendSuggestion('What can you help me with?')">What can you help me with?</div>
+                <div class="suggestion" role="listitem" tabindex="0" onclick="sendSuggestion('Explain quantum computing')">Explain quantum computing</div>
+                <div class="suggestion" role="listitem" tabindex="0" onclick="sendSuggestion('Write a creative story')">Write a creative story</div>
+                <div class="suggestion" role="listitem" tabindex="0" onclick="sendSuggestion('Help me plan my day')">Help me plan my day</div>
+            </div>
+        </div>
+
+        <div class="typing-indicator" aria-live="polite" aria-atomic="true" aria-label="AI is typing" style="display:none;">
+            <div class="message-avatar" aria-hidden="true">
+                <i class="fas fa-hippo"></i>
+            </div>
+            <div class="typing-dots" aria-hidden="true">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+            <span style="color: var(--text-muted); font-size: 0.875rem;">AI is typing...</span>
         </div>
     </main>
 
+    <div class="input-container">
+        <form class="input-form" id="chatForm" aria-label="Send a message" method="post" action="{{ url_for('main.will_ai_chat') }}">
+            <div class="input-wrapper">
+                <textarea 
+                    id="messageInput" 
+                    name="message" 
+                    class="message-input" 
+                    placeholder="Digite sua mensagem aqui..." 
+                    aria-required="true"
+                    rows="1"
+                    autocomplete="off"
+                    spellcheck="false"
+                ></textarea>
+                <div class="input-actions">
+                    <button type="submit" class="send-button" id="sendButton" aria-label="Send message" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
-{% endblock %}
 
-{% block custom_js %}
 <script>
-const messagesContainer = document.getElementById('messages');
-const chatForm = document.getElementById('chat-form');
-const messageInput = document.getElementById('message-input');
+function formatTimestamp(date) {
+    const optionsTime = { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' };
+    const optionsDate = { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Sao_Paulo' };
+    const now = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+    const dt = new Date(date.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+    const diffTime = now - dt;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-function formatTime(date) {
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
-function addMessage(content, sender, isImage = false) {
-  const messageElem = document.createElement('div');
-  messageElem.classList.add('message', sender);
-
-  const header = document.createElement('div');
-  header.classList.add('message-header');
-
-  const avatar = document.createElement('div');
-  avatar.classList.add('avatar');
-  avatar.setAttribute('aria-hidden', 'true');
-  avatar.innerHTML = sender === 'user' ? '<i class="fas fa-user-circle"></i>' : '<i class="fas fa-hippo"></i>';
-
-  const senderName = document.createElement('span');
-  senderName.classList.add('sender-name');
-  senderName.textContent = sender === 'user' ? 'Você' : 'Will AI';
-
-  const timestamp = document.createElement('span');
-  timestamp.classList.add('timestamp');
-  timestamp.textContent = formatTime(new Date());
-
-  header.appendChild(avatar);
-  header.appendChild(senderName);
-  header.appendChild(timestamp);
-
-  messageElem.appendChild(header);
-
-  const contentElem = document.createElement('div');
-  contentElem.classList.add('message-content');
-
-  if (isImage) {
-    const img = document.createElement('img');
-    img.src = content;
-    img.alt = sender === 'user' ? 'Sua imagem' : 'Imagem do Will AI';
-    contentElem.appendChild(img);
-  } else {
-    if (sender === 'assistant') {
-      const paragraphs = content.split(/(?:\\n){2,}/);
-      contentElem.innerHTML = '';
-      paragraphs.forEach(paragraph => {
-        const p = document.createElement('p');
-        p.innerHTML = paragraph.replace(/\\n/g, '<br>');
-        contentElem.appendChild(p);
-      });
+    let dayLabel = '';
+    if (diffDays === 0) {
+        dayLabel = 'Hoje';
+    } else if (diffDays === 1) {
+        dayLabel = 'Ontem';
     } else {
-      content.split('\\n').forEach(paragraph => {
-        const p = document.createElement('p');
-        p.textContent = paragraph;
-        contentElem.appendChild(p);
-      });
+        dayLabel = dt.toLocaleDateString('pt-BR', optionsDate);
     }
-  }
 
-  messageElem.appendChild(contentElem);
-
-  messagesContainer.appendChild(messageElem);
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    return dt.toLocaleTimeString('pt-BR', optionsTime) + ' - ' + dayLabel;
 }
 
-chatForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const text = messageInput.value.trim();
-  if (!text) return;
-
-  addMessage(text, 'user');
-  messageInput.value = '';
-  messageInput.focus();
-
-  const typingIndicator = document.createElement('div');
-  typingIndicator.classList.add('typing-indicator');
-  typingIndicator.textContent = 'Will AI está digitando...';
-
-  // Insert typing indicator below last user message or at end if none
-  const userMessages = messagesContainer.querySelectorAll('.message.user');
-  if (userMessages.length > 0) {
-    const lastUserMessage = userMessages[userMessages.length - 1];
-    lastUserMessage.insertAdjacentElement('afterend', typingIndicator);
-  } else {
-    messagesContainer.appendChild(typingIndicator);
-  }
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-  try {
-    const response = await fetch('{{ url_for("main.will_ai_chat") }}', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text, type: 'text' })
+function updateAllTimestamps() {
+    const timestampElements = document.querySelectorAll('.message-timestamp[data-timestamp]');
+    timestampElements.forEach(el => {
+        const ts = el.getAttribute('data-timestamp');
+        if (ts) {
+            const date = new Date(ts);
+            if (!isNaN(date)) {
+                el.textContent = formatTimestamp(date);
+            }
+        }
     });
-    const data = await response.json();
-    typingIndicator.remove();
-    if (data.success) {
-      addMessage(data.response, 'assistant');
-    } else {
-      addMessage('Erro: ' + data.error, 'assistant');
-    }
-  } catch (error) {
-    typingIndicator.remove();
-    addMessage('Erro na comunicação com o servidor.', 'assistant');
-  }
-});
+}
 
-messageInput.addEventListener('input', () => {
-  messageInput.style.height = 'auto';
-  messageInput.style.height = messageInput.scrollHeight + 'px';
+class ChatInterface {
+    constructor() {
+        this.messagesContainer = document.querySelector('.messages-container');
+        this.messageInput = document.getElementById('messageInput');
+        this.chatForm = document.getElementById('chatForm');
+        this.sendButton = document.getElementById('sendButton');
+        this.typingIndicator = document.querySelector('.typing-indicator');
+        this.emptyState = document.querySelector('.empty-state');
+
+        this.init();
+    }
+
+    init() {
+        this.setupEventListeners();
+        this.setupTextareaAutoResize();
+        this.scrollToBottomOnLoad();
+        updateAllTimestamps();
+    }
+
+    setupEventListeners() {
+        this.chatForm.addEventListener('submit', (e) => this.handleSubmit(e));
+        this.messageInput.addEventListener('keydown', (e) => this.handleKeyDown(e));
+        this.messageInput.addEventListener('input', () => this.updateSendButton());
+    }
+
+    setupTextareaAutoResize() {
+        this.messageInput.addEventListener('input', () => {
+            this.messageInput.style.height = 'auto';
+            this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 120) + 'px';
+        });
+    }
+
+    scrollToBottomOnLoad() {
+        // Scroll to the bottom when the page loads
+        requestAnimationFrame(() => {
+            this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+        });
+    }
+
+    handleKeyDown(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            this.handleSubmit(e);
+        }
+    }
+
+    handleSubmit(e) {
+        e.preventDefault();
+        const message = this.messageInput.value.trim();
+        if (!message) return;
+
+        this.sendMessage(message);
+    }
+
+    updateSendButton() {
+        const hasText = this.messageInput.value.trim().length > 0;
+        this.sendButton.disabled = !hasText;
+    }
+
+    async sendMessage(messageText) {
+        // Hide empty state
+        if (this.emptyState) {
+            this.emptyState.style.display = 'none';
+        }
+
+        // Add user message
+        this.addMessage(messageText, 'user');
+        
+        // Clear input
+        this.messageInput.value = '';
+        this.messageInput.style.height = 'auto';
+        this.updateSendButton();
+
+        // Show typing indicator
+        this.showTypingIndicator();
+
+        try {
+            // Send message to backend API
+            const response = await fetch('{{ url_for("main.will_ai_chat") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: messageText })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            // Add assistant response
+            this.addMessage(data.response, 'assistant');
+        } catch (error) {
+            console.error('Chat error:', error);
+            this.addMessage('Sorry, I encountered an error. Please try again.', 'assistant', true);
+        } finally {
+            this.hideTypingIndicator();
+        }
+    }
+
+    addMessage(content, role, isError = false) {
+        const messageElement = document.createElement('div');
+        messageElement.className = `message ${role}`;
+        messageElement.innerHTML = `
+            <div class="message-avatar">
+                ${role === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-hippo"></i>'}
+            </div>
+            <div class="message-content-wrapper">
+                <div class="message-bubble ${isError ? 'error' : ''}">
+                    ${content}
+                </div>
+                <div class="message-timestamp">
+                    ${formatTimestamp(new Date())}
+                </div>
+            </div>
+        `;
+
+        // Insert before typing indicator if it exists
+        const typingIndicator = this.messagesContainer.querySelector('.typing-indicator');
+        if (typingIndicator) {
+            this.messagesContainer.insertBefore(messageElement, typingIndicator);
+        } else {
+            this.messagesContainer.appendChild(messageElement);
+        }
+
+        this.scrollToBottom();
+    }
+
+    showTypingIndicator() {
+        this.typingIndicator.style.display = 'flex';
+        this.scrollToBottom();
+    }
+
+    hideTypingIndicator() {
+        this.typingIndicator.style.display = 'none';
+    }
+
+    scrollToBottom() {
+        requestAnimationFrame(() => {
+            this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+        });
+    }
+}
+
+// Global function for suggestion clicks
+function sendSuggestion(text) {
+    const chat = new ChatInterface();
+    chat.messageInput.value = text;
+    chat.sendMessage(text);
+}
+
+// Initialize chat when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    new ChatInterface();
 });
 </script>
-
-<style>
-.typing-indicator {
-  font-style: italic;
-  color: #6b7280;
-  margin-top: 0.75rem;
-  user-select: none;
-  animation: blink 1.4s infinite;
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-
-/* Fixed height and scroll for messages container */
-#messages {
-  height: 400px;
-  overflow-y: auto;
-  padding-right: 0.5rem;
-  scroll-behavior: smooth;
-}
-</style>
 {% endblock %}
+</body>
+</html>
