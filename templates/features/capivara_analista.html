@@ -215,20 +215,10 @@ class ChatInterface {
 
             // Split assistant response by sentence and add each as a separate message with delay
             if (typeof data.response === 'string') {
-                // Split by sentence, ensuring numeral-dot (e.g., "3.") starts the sentence
-                const sentences = [];
-                const regex = /(\d+\.\s*)?([^\.!\?]+[\.!\?]+(\s|$))/g;
-                let match;
-                while ((match = regex.exec(data.response)) !== null) {
-                    const sentence = (match[1] ? match[1] : '') + match[2];
-                    sentences.push(sentence.trim());
-                }
+                const sentences = this.splitIntoMessages(data.response);
                 for (const sentence of sentences) {
-                    const trimmedSentence = sentence.trim();
-                    if (trimmedSentence.length > 0) {
-                        this.addMessage(trimmedSentence, 'assistant');
-                        await delay(3000); // wait 3 seconds before next message
-                    }
+                    this.addMessage(sentence, 'assistant');
+                    await delay(3000); // wait 3 seconds before next message
                 }
             } else {
                 // If not string, add as is
@@ -240,6 +230,61 @@ class ChatInterface {
         } finally {
             this.hideTypingIndicator();
         }
+    }
+
+    splitIntoMessages(text) {
+        const sentences = [];
+        let currentSentence = '';
+        
+        // Split by numbered points (e.g., "1.", "2.", etc.) to ensure they start new messages
+        const parts = text.split(/(\d+\.\s*)/);
+        
+        for (let i = 0; i < parts.length; i++) {
+            const part = parts[i];
+            
+            // If this part is a numbered point (e.g., "1. ")
+            if (/^\d+\.\s*$/.test(part)) {
+                // If we have accumulated content, save it as a sentence (with minimum 3 chars)
+                if (currentSentence.trim().length >= 3) {
+                    sentences.push(currentSentence.trim());
+                }
+                // Start new sentence with the numbered point
+                currentSentence = part;
+            } else {
+                // Add this part to current sentence
+                currentSentence += part;
+                
+                // Check for sentence endings (., !, ?)
+                const sentenceEndings = currentSentence.match(/[.!?]+/g);
+                if (sentenceEndings) {
+                    // Split by sentence endings but keep the endings
+                    const subSentences = currentSentence.split(/([.!?]+)/);
+                    let tempSentence = '';
+                    
+                    for (let j = 0; j < subSentences.length; j++) {
+                        const subPart = subSentences[j];
+                        tempSentence += subPart;
+                        
+                        // If this is a sentence ending and we have enough content
+                        if (/^[.!?]+$/.test(subPart) && tempSentence.trim().length >= 3) {
+                            sentences.push(tempSentence.trim());
+                            tempSentence = '';
+                        }
+                    }
+                    
+                    // Keep any remaining content for next iteration
+                    currentSentence = tempSentence;
+                }
+            }
+        }
+        
+        // Add any remaining content if it meets minimum length
+        if (currentSentence.trim().length >= 3) {
+            sentences.push(currentSentence.trim());
+        }
+        
+        // Filter out empty or too short sentences
+        return sentences.filter(sentence => sentence.trim().length >= 3);
     }
 
     addMessage(content, role, isError = false) {
