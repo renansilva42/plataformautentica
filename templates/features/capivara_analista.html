@@ -218,7 +218,7 @@ class ChatInterface {
                 const sentences = this.splitIntoMessages(data.response);
                 for (const sentence of sentences) {
                     this.addMessage(sentence, 'assistant');
-                    await delay(3000); // wait 3 seconds before next message
+                    await delay(5000); // wait 3 seconds before next message
                 }
             } else {
                 // If not string, add as is
