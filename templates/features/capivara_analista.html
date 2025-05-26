@@ -215,25 +215,13 @@ class ChatInterface {
 
             // Split assistant response by sentence and add each as a separate message with delay
             if (typeof data.response === 'string') {
-                // Split by sentence using regex to keep punctuation, but ignore numerals followed by dot (e.g., "3.")
+                // Split by sentence, ensuring numeral-dot (e.g., "3.") starts the sentence
                 const sentences = [];
-                const regex = /(\d+\.)|([^\.!\?]+[\.!\?]+(\s|$))/g;
+                const regex = /(\d+\.\s*)?([^\.!\?]+[\.!\?]+(\s|$))/g;
                 let match;
-                let buffer = '';
                 while ((match = regex.exec(data.response)) !== null) {
-                    if (match[1]) {
-                        // It's a numeral followed by dot, add to buffer without splitting
-                        buffer += match[1] + ' ';
-                    } else if (match[2]) {
-                        // It's a sentence
-                        buffer += match[2];
-                        sentences.push(buffer.trim());
-                        buffer = '';
-                    }
-                }
-                // Add any remaining buffer as a sentence
-                if (buffer.trim().length > 0) {
-                    sentences.push(buffer.trim());
+                    const sentence = (match[1] ? match[1] : '') + match[2];
+                    sentences.push(sentence.trim());
                 }
                 for (const sentence of sentences) {
                     const trimmedSentence = sentence.trim();
