@@ -164,10 +164,11 @@ class SupabaseManager:
                 "telefone": telefone
             }
             response = supabase.table("messages_analista").insert(message_data).execute()
-            if response.status_code == 201 or response.status_code == 200:
+            # The Supabase client response does not have status_code, check error attribute instead
+            if response.error is None:
                 return True, response.data
             else:
-                return False, response.data
+                return False, response.error.message if response.error else "Unknown error"
         except Exception as e:
             logger.error(f"Insert message analista error: {str(e)}", exc_info=True)
             return False, str(e)

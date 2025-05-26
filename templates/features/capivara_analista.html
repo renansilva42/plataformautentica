@@ -90,22 +90,8 @@
 <script>
 function formatTimestamp(date) {
     const optionsTime = { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' };
-    const optionsDate = { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Sao_Paulo' };
-    const now = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
     const dt = new Date(date.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
-    const diffTime = now - dt;
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    let dayLabel = '';
-    if (diffDays === 0) {
-        dayLabel = 'Hoje';
-    } else if (diffDays === 1) {
-        dayLabel = 'Ontem';
-    } else {
-        dayLabel = dt.toLocaleDateString('pt-BR', optionsDate);
-    }
-
-    return dt.toLocaleTimeString('pt-BR', optionsTime) + ' - ' + dayLabel;
+    return dt.toLocaleTimeString('pt-BR', optionsTime);
 }
 
 function updateAllTimestamps() {
@@ -201,6 +187,9 @@ class ChatInterface {
         // Show typing indicator
         this.showTypingIndicator();
 
+        // Helper function to delay execution
+        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
         try {
             // Send message to backend API
             const payload = {
@@ -224,8 +213,39 @@ class ChatInterface {
                 throw new Error(data.error);
             }
 
-            // Add assistant response
-            this.addMessage(data.response, 'assistant');
+            // Split assistant response by sentence and add each as a separate message with delay
+            if (typeof data.response === 'string') {
+                // Split by sentence using regex to keep punctuation, but ignore numerals followed by dot (e.g., "3.")
+                const sentences = [];
+                const regex = /(\d+\.)|([^\.!\?]+[\.!\?]+(\s|$))/g;
+                let match;
+                let buffer = '';
+                while ((match = regex.exec(data.response)) !== null) {
+                    if (match[1]) {
+                        // It's a numeral followed by dot, add to buffer without splitting
+                        buffer += match[1] + ' ';
+                    } else if (match[2]) {
+                        // It's a sentence
+                        buffer += match[2];
+                        sentences.push(buffer.trim());
+                        buffer = '';
+                    }
+                }
+                // Add any remaining buffer as a sentence
+                if (buffer.trim().length > 0) {
+                    sentences.push(buffer.trim());
+                }
+                for (const sentence of sentences) {
+                    const trimmedSentence = sentence.trim();
+                    if (trimmedSentence.length > 0) {
+                        this.addMessage(trimmedSentence, 'assistant');
+                        await delay(3000); // wait 3 seconds before next message
+                    }
+                }
+            } else {
+                // If not string, add as is
+                this.addMessage(data.response, 'assistant');
+            }
         } catch (error) {
             console.error('Chat error:', error);
             this.addMessage('Sorry, I encountered an error. Please try again.', 'assistant', true);
@@ -245,7 +265,53 @@ class ChatInterface {
         if (isImage) {
             messageContentHtml = `<img src="${content}" alt="User uploaded image" class="message-image-thumbnail" />`;
         } else {
-            messageContentHtml = content;
+            // Format AI assistant response for user-friendly display with basic markdown parsing
+            if (role === 'assistant' && typeof content === 'string') {
+                // Escape HTML special characters
+                const escapeHtml = (unsafe) => {
+                    return unsafe.replace(/[&<>"']/g, function(m) {
+                        switch (m) {
+                            case '&': return '&amp;';
+                            case '<': return '<';
+                            case '>': return '>';
+                            case '"': return '"';
+                            case "'": return '&#039;';
+                            default: return m;
+                        }
+                    });
+                };
+
+                // Basic markdown to HTML conversion
+                const markdownToHtml = (text) => {
+                    let html = escapeHtml(text);
+
+                    // Convert headers (e.g., ### Header)
+                    html = html.replace(/^### (.*)$/gm, '<h3>$1</h3>');
+                    html = html.replace(/^## (.*)$/gm, '<h2>$1</h2>');
+                    html = html.replace(/^# (.*)$/gm, '<h1>$1</h1>');
+
+                    // Convert bold **text** or __text__
+                    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
+
+                    // Convert italics *text* or _text_
+                    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                    html = html.replace(/_(.*?)_/g, '<em>$1</em>');
+
+                    // Convert unordered lists
+                    html = html.replace(/^\s*[-*+] (.*)$/gm, '<li>$1</li>');
+                    html = html.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+
+                    // Convert line breaks
+                    html = html.replace(/\n/g, '<br>');
+
+                    return html;
+                };
+
+                messageContentHtml = markdownToHtml(content);
+            } else {
+                messageContentHtml = content;
+            }
         }
 
         messageElement.innerHTML = `
@@ -255,9 +321,9 @@ class ChatInterface {
             <div class="message-content-wrapper">
                 <div class="message-bubble ${isError ? 'error' : ''}">
                     ${messageContentHtml}
-                </div>
-                <div class="message-timestamp">
-                    ${formatTimestamp(new Date())}
+                    <div class="message-timestamp" style="text-align: right; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+                        ${formatTimestamp(new Date())}
+                    </div>
                 </div>
             </div>
         `;
@@ -329,16 +395,54 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-<style>
-.message-image-thumbnail {
-    max-width: 150px;
-    max-height: 150px;
-    border-radius: 8px;
-    object-fit: cover;
-    display: block;
-    margin: 0.25rem 0;
-}
-</style>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+    // Override addMessage to use marked.js for assistant messages
+    const originalAddMessage = ChatInterface.prototype.addMessage;
+    ChatInterface.prototype.addMessage = function(content, role, isError = false) {
+        const messageElement = document.createElement('div');
+        messageElement.className = `message ${role}`;
+
+        // Check if content is a base64 image data URI
+        const isImage = typeof content === 'string' && content.startsWith('data:image/');
+
+        let messageContentHtml = '';
+        if (isImage) {
+            messageContentHtml = `<img src="${content}" alt="User uploaded image" class="message-image-thumbnail" />`;
+        } else {
+            if (role === 'assistant' && typeof content === 'string') {
+                // Use marked.js to parse markdown safely
+                messageContentHtml = marked.parse(content);
+            } else {
+                messageContentHtml = content;
+            }
+        }
+
+        messageElement.innerHTML = `
+            <div class="message-avatar">
+                ${role === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-hippo"></i>'}
+            </div>
+            <div class="message-content-wrapper">
+                <div class="message-bubble ${isError ? 'error' : ''}">
+                    ${messageContentHtml}
+                </div>
+                <div class="message-timestamp">
+                    ${formatTimestamp(new Date())}
+                </div>
+            </div>
+        `;
+
+        // Insert before typing indicator if it exists
+        const typingIndicator = this.messagesContainer.querySelector('.typing-indicator');
+        if (typingIndicator) {
+            this.messagesContainer.insertBefore(messageElement, typingIndicator);
+        } else {
+            this.messagesContainer.appendChild(messageElement);
+        }
+
+        this.scrollToBottom();
+    };
+</script>
 
 {% endblock %}
 </body>
