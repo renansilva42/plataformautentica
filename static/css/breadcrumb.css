@@ -1,0 +1,72 @@
+.breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    list-style: none;
+    padding: 0.5rem 1rem;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    box-shadow: 0 4px 12px rgba(38, 50, 56, 0.15);
+    font-family: 'Montserrat', sans-serif;
+    color: #fff;
+}
+
+.breadcrumb a {
+    color: #e0e7ff;
+    text-decoration: underline;
+    position: relative;
+    padding-right: 0.75rem;
+    font-weight: 600;
+    transition: color 0.4s ease, text-shadow 0.4s ease;
+    cursor: pointer;
+}
+
+.breadcrumb a::after {
+    content: "›";
+    position: absolute;
+    right: 0;
+    color: #a5b4fc;
+    font-weight: 700;
+    transition: color 0.4s ease;
+    font-size: 1.2rem;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.breadcrumb a:hover {
+    color: #fff;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+    text-decoration: underline;
+}
+
+.breadcrumb a:hover::after {
+    color: #fff;
+}
+
+.breadcrumb .separator {
+    display: none;
+}
+
+.breadcrumb [aria-current="page"] {
+    color: #dbeafe;
+    font-weight: 700;
+    cursor: default;
+    text-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .breadcrumb a {
+        transition: color 0.4s ease, text-shadow 0.4s ease;
+    }
+    .breadcrumb a::after {
+        transition: color 0.4s ease;
+    }
+}
+
+@media (max-width: 600px) {
+    .breadcrumb {
+        font-size: 0.9rem;
+        padding: 0.4rem 0.8rem;
+    }
+}

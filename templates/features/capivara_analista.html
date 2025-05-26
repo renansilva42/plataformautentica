@@ -237,13 +237,24 @@ class ChatInterface {
     addMessage(content, role, isError = false) {
         const messageElement = document.createElement('div');
         messageElement.className = `message ${role}`;
+
+        // Check if content is a base64 image data URI
+        const isImage = typeof content === 'string' && content.startsWith('data:image/');
+
+        let messageContentHtml = '';
+        if (isImage) {
+            messageContentHtml = `<img src="${content}" alt="User uploaded image" class="message-image-thumbnail" />`;
+        } else {
+            messageContentHtml = content;
+        }
+
         messageElement.innerHTML = `
             <div class="message-avatar">
                 ${role === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-hippo"></i>'}
             </div>
             <div class="message-content-wrapper">
                 <div class="message-bubble ${isError ? 'error' : ''}">
-                    ${content}
+                    ${messageContentHtml}
                 </div>
                 <div class="message-timestamp">
                     ${formatTimestamp(new Date())}
@@ -317,6 +328,18 @@ document.addEventListener('DOMContentLoaded', () => {
     new ChatInterface();
 });
 </script>
+
+<style>
+.message-image-thumbnail {
+    max-width: 150px;
+    max-height: 150px;
+    border-radius: 8px;
+    object-fit: cover;
+    display: block;
+    margin: 0.25rem 0;
+}
+</style>
+
 {% endblock %}
 </body>
 </html>
