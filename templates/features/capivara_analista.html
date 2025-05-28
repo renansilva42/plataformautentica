@@ -24,10 +24,8 @@
             </div>
         </div>
         <div class="user-menu">
-            <div class="user-info">Logado como {{ user.email }}</div>
-            <a href="{{ url_for('main.logout') }}" class="logout-btn" aria-label="Sign Out">
-                <i class="fas fa-sign-out-alt"></i>
-                Sair
+            <a href="{{ url_for('main.home') }}" class="btn btn-primary btn-voltar" aria-label="Voltar para a home">
+                Voltar
             </a>
         </div>
     </header>

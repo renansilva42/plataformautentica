@@ -25,6 +25,14 @@
     box-sizing: border-box;
 }
 
+html, body {
+    height: 100%;
+    background-color: var(--background);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--background);
@@ -371,13 +379,13 @@ body::before {
     transform: none;
 }
 
-.typing-indicator {
-    display: none;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem 0;
+/* New CSS for Voltar button */
+.btn-voltar {
+    width: auto;
+    padding: 0.5rem 1rem;
+    text-align: left;
+    display: inline-block;
 }
-
 .typing-dots {
     display: flex;
     gap: 4px;
