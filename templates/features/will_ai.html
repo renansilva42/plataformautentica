@@ -318,9 +318,10 @@ class ChatInterface {
                 <div class="message-bubble ${isError ? 'error' : ''}">
                     ${messageContentHtml}
                 </div>
-                <div class="message-timestamp">
-                    ${formatTimestamp(new Date())}
-                </div>
+            <div class="message-timestamp" style="text-align: right; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+                ${formatTimestamp(new Date())}
+            </div>
+
             </div>
         `;
 

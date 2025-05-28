@@ -84,22 +84,8 @@
 <script>
     function formatTimestamp(date) {
         const optionsTime = { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' };
-        const optionsDate = { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'America/Sao_Paulo' };
-        const now = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
         const dt = new Date(date.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
-        const diffTime = now - dt;
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-        let dayLabel = '';
-        if (diffDays === 0) {
-            dayLabel = 'Hoje';
-        } else if (diffDays === 1) {
-            dayLabel = 'Ontem';
-        } else {
-            dayLabel = dt.toLocaleDateString('pt-BR', optionsDate);
-        }
-
-        return dt.toLocaleTimeString('pt-BR', optionsTime) + ' - ' + dayLabel;
+        return dt.toLocaleTimeString('pt-BR', optionsTime);
     }
 
     function updateAllTimestamps() {
